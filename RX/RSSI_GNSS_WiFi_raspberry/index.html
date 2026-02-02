@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .data {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>GPS Data</h1>
+    <div id="gps-data"></div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('/measure_LCL1');
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function updateUI(data) {
+            const gpsDataDiv = document.getElementById('gps-data');
+            gpsDataDiv.innerHTML = `
+                <p><strong>Battery:</strong> ${data.battery_level}</p>
+                <p><strong>Level:</strong> ${data.level}</p>
+                <p><strong>Latitude:</strong> ${data.latitude}</p>
+                <p><strong>Longitude:</strong> ${data.longitude}</p>
+                <p><strong>Altitude:</strong> ${data.altitude}</p>
+            `;
+        }
+
+        setInterval(fetchData, 5000); // Actualiza cada 5 segundos
+        fetchData(); // Llama a la función inmediatamente para cargar los datos al inicio
+    </script>
+</body>
+</html>
