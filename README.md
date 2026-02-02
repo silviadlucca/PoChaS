@@ -19,6 +19,5 @@
 │   ├── 📄 AutoRadio
 │   ├── 📄 lanzador_radio.sh
 │   └── 🐍 tx_medidas.py
-├── 📝 README.md
-└── 📦 RSSI_GNSS_WiFi_v10.zip
+└── 📝 README.md
 ```
