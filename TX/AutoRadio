@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=AutoRadio
+# Al arrancar la raspberry, este programa se ejecutara automaticamente
+
+Exec=/home/pi/lanzador_radio.sh # Ejecutamos el archivo .sh que hara que funcione el .py
+
+X-GNOME-Autostart-enabled=true
+
+# Este archivo se coloca dentro de de /home/pi/.config/autostart 
