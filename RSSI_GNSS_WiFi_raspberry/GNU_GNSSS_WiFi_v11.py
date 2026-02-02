@@ -18,7 +18,7 @@ from datetime import datetime
 from RSSIMeasurement_v11 import run_measurement
 from time import sleep
 from Module_GNSS_v11 import read_gnss_data
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
 import threading
 import psutil
@@ -26,9 +26,13 @@ import psutil
 import subprocess
 import re
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='.')
 CORS(app)
 measure = {}
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/measure_LCL1', methods=['GET'])
 def get_data():

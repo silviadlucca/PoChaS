@@ -20,7 +20,7 @@
     <script>
         async function fetchData() {
             try {
-                const response = await fetch('http://10.42.0.1:5000/measure_LCL1');
+                const response = await fetch('/measure_LCL1');
                 const data = await response.json();
                 updateUI(data);
             } catch (error) {
