@@ -12,6 +12,7 @@ Created on Tue Mar 11 17:09:12 2025
 
 import pynmea2
 import serial
+import time
 
 
 def read_gnss_data():
@@ -34,10 +35,12 @@ def read_gnss_data():
         altitude = None
         hdop = None
 
-        while True:
+        start_time = time.time()
+        
+        while (time.time() - start_time) < 1.0:
             if ser.in_waiting > 0:
                 # Read and decode line from serial
-                line = ser.readline().decode('utf-8').rstrip()
+                line = ser.readline().decode('utf-8', errors = 'replace').rstrip()
 
 
                 # Only process NMEA sentences (start with $)
@@ -67,10 +70,15 @@ def read_gnss_data():
                         if None not in (timestamp, latitude, longitude, altitude):
                            # print(f"Timestamp: {timestamp}, Latitude: {latitude}, "
                            #       f"Longitude: {longitude}, Altitude: {altitude}, HDOP: {hdop}")
+                            ser.close()
                             return timestamp, latitude, longitude, altitude, hdop
 
                     except pynmea2.ParseError as e:
-                        print(f"Parse error: {e}")
+                        continue
+                    except Exception:
+                            continue
+        ser.close()
+        return None
 
     except serial.SerialException as e:
         print(f"Serial connection error: {e}")

@@ -26,21 +26,90 @@ import psutil
 import subprocess
 import re
 
-app = Flask(__name__, template_folder='.')
+app = Flask(__name__,template_folder='.')
 CORS(app)
 measure = {}
+
+def release_port(port):
+    try:
+        cmd = f"sudo fuser -k {port}/tcp"
+        subprocess.run(cmd, shell = True, stderr=subprocess.DEVNULL, stdout = subprocess.DEVNULL)
+        time.sleep(1)
+        print("Port released.")
+    except Exception as e:
+        print(f"Warning releasing port: {e}")
+
+
+def setup_hotspot():
+    max_retries = 30
+    wifi_ready  =False
+    
+    for i in range(max_retries):
+        try:
+            result = subprocess.check_output(["ip","link","show","wlan0"],stderr = subprocess.STDOUT)
+            print("Detected wifi")
+            wifi_ready = True
+            break
+        except subprocess.CalledProcessError:
+            print("Waiting for wifi...")
+            time.sleep(1)
+    if not wifi_ready:
+            print("ERROR WIFI")
+            return
+            
+    time.sleep(2)
+    
+    subprocess.run(["sudo","iw","reg","set","ES"],check = False)
+    
+    
+    subprocess.run(["sudo","nmcli","connection","delete","rx_hotspot"], stderr = subprocess.DEVNULL, stdout = subprocess.DEVNULL)
+    subprocess.run(["sudo","nmcli","connection","delete","preconfigured"], stderr = subprocess.DEVNULL, stdout = subprocess.DEVNULL)
+    
+    
+    cmd_add = ["sudo", "nmcli", "con", "add",
+                "type", "wifi", "ifname", "wlan0", "con-name",
+                "rx_hotspot", "autoconnect", "yes",
+                "ssid", "rx_wifi"]
+                
+    subprocess.run(cmd_add, check = False)
+    time.sleep(1)
+    
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "802-11-wireless.mode", "ap"], check = False)
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "ipv4.addresses", "192.168.4.1/24"],check = False)
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "ipv4.gateway", "192.168.4.1"], check = False)
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "ipv4.method","shared"], check = False)
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "wifi-sec.key-mgmt", "wpa-psk"], check = False)
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "wifi-sec.psk","pochas123456"],check = False)
+    
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "802-11-wireless.band","bg"],check = False)
+    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "802-11-wireless.channel","6"], check = False)
+    
+    subprocess.run(["sudo","nmcli","con","modify","rx_hotspot","connection.autoconnect-priority","100"],check = False)
+    
+    
+    
+    print("Configuring hotspot rx...")
+    try:
+        subprocess.run(["sudo","nmcli","con","up","rx_hotspot"],check =False)
+        subprocess.run(["sudo","iw","wlan0","set","power_save","off"], check = False)
+        
+        print("Hotspot active:rx_wifi   Password: pochas123456")
+    except Exception as e:
+        print(f"Error configuring hotspot: {e}")
+
 
 @app.route('/')
 def index():
     return render_template('index.html')
+    
+@app.route('/measure_LCL1',methods=['GET'])
 
-@app.route('/measure_LCL1', methods=['GET'])
 def get_data():
     return jsonify(measure)
 
 def start_flask():
     print("Starting Flask server...")
-    app.run(host='10.42.0.1', port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
 
 def get_usrp_serial():
     """
@@ -88,17 +157,22 @@ def write_measure(battery_level, level, latitude, longitude, altitude):
 
 
 if __name__ == '__main__':
+    
+    release_port(port=5000)
 
     freq= 2.4e9
     gain=20
     output_prefix='Measure'
     #max_iterations=10
     max_iterations = float('inf')
-
+    
+    setup_hotspot()
+    
+    time.sleep(5)
     
     # Obtener la fecha y hora actual
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    txt_filename = f"RxGNNS_{timestamp}.txt"
+    txt_filename = f"{timestamp}_Rx.txt"
     usrp_serial=get_usrp_serial()
 
     if not usrp_serial:
@@ -118,7 +192,6 @@ if __name__ == '__main__':
 
 
         while True:
-
             # Obtiene las mediciones de GNSS
             data = read_gnss_data()
 
