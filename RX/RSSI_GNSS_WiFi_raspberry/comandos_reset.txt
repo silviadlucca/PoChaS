@@ -1,0 +1,11 @@
+sudo systemctl stop dhcpcd
+sudo systemctl disable dhcpcd
+
+sudo systemctl stop dnsmasq
+sudo systemctl disable dnsmasq
+
+sudo rm /etc/NetworkManager/system-connections/*
+
+sudo systemctl restart NetworkManager
+
+sudo reboot
