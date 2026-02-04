@@ -25,7 +25,7 @@ def read_gnss_data():
     """
     try:
         # Initialize serial connection
-        ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
+        ser = serial.Serial('/dev/serial0', 115200, timeout=1)
         ser.flush()
 
         # Variables to store data from different message types
@@ -72,7 +72,6 @@ def read_gnss_data():
                            #       f"Longitude: {longitude}, Altitude: {altitude}, HDOP: {hdop}")
                             ser.close()
                             return timestamp, latitude, longitude, altitude, hdop
-
                     except pynmea2.ParseError as e:
                         continue
                     except Exception:
