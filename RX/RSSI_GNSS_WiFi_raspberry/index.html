@@ -41,92 +41,95 @@
             `;
         }
 
-        setInterval(fetchData, 5000); // Actualiza cada 5 segundos
-        fetchData(); // Llama a la función inmediatamente para cargar los datos al inicio
+        setInterval(fetchData, 5000);
+        fetchData();
     </script>
     
     <div style="text-align: center; margin-top: 20px;">
-    
-    <button id="btnStop" class="btn" onclick="stopRecording()" style="
-        background-color: #92D695; /* Verde */
-        color: white; 
-        padding: 15px 32px; 
-        text-align: center; 
-        font-size: 18px; 
-        margin: 10px 0; 
-        border: none; 
-        border-radius: 8px; 
-        width: 80%;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;">
-        🎥 1. Stop recording
-    </button>
-    
-    <button id="btnDown" class="btn" onclick="downloadFile()" style="
-        background-color: #7DB5E3; /* Azul */
-        color: white; 
-        padding: 15px 32px; 
-        text-align: center; 
-        font-size: 18px; 
-        margin: 10px 0; 
-        border: none; 
-        border-radius: 8px; 
-        width: 80%;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;">
-        📥 2. Download data (.txt)
-    </button>
+        
+        <button id="btnStart" class="btn" onclick="startRecording()" style="
+            background-color: #F1C40F; /* Amarillo */
+            color: black; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            ▶️ 1. Start / New Recording
+        </button>
 
-    <button id="btnOff" class = "btn" onclick="finishAndOff()" style="
-        background-color: #DE5D54; /* Rojo */
-        color: white; 
-        padding: 15px 32px; 
-        text-align: center; 
-        font-size: 18px; 
-        margin: 10px 0; 
-        border: none; 
-        border-radius: 8px; 
-        width: 80%;
-        display: block;
-        margin-left: auto;
-        margin-right: auto;">
-        🛑 3. Reboot
-    </button>
-    
-    
-    
+        <button id="btnStop" class="btn" onclick="stopRecording()" style="
+            background-color: #92D695; /* Verde */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            🎥 2. Stop recording
+        </button>
+        
+        <button id="btnDown" class="btn" onclick="downloadFile()" style="
+            background-color: #7DB5E3; /* Azul */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            📥 3. Download data (.txt)
+        </button>
 
-</div>
+        <button id="btnOff" class="btn" onclick="rebootSystem()" style="
+            background-color: #E67E22; /* Naranja */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            🔄 4. Reboot
+        </button>
 
-<script>
-    function downloadFile() {
-        window.location.href = "/download";
-    }
-    function finishAndOff() {
-        if (confirm("Have you download the file? If you press OK, the Raspberry will reboot.")) {
-            fetch('/reboot', { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                alert("Rebooting the system...");
-                document.body.style.backgroundColor = "gray";
-                document.body.innerHTML = "<h1 style='color:white; text-align:center;'>SISTEMA APAGADO</h1>";
-            });
-        }
-    }
-    
-    function stopRecording(){
-        if(confirm("Stop recording data to file?")){
-            fetch('/stop_recording', { method: 'POST' })
+        <button id="btnPower" class="btn" onclick="powerOffSystem()" style="
+            background-color: #DE5D54; /* Rojo */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            🛑 5. Power Off
+        </button>
+    </div>
+
+    <script>
+        function startRecording() {
+            fetch('/start_recording', { method: 'POST' })
             .then(res => res.json())
-            .then(data => {
-                alert("Recording stopped. You can download the data now.");
-            })
+            .then(data => alert(data.status))
             .catch(error => console.error('Error:', error));
         }
-    }
-</script>
-    
+
+        function stopRecording(){
+            if(confirm("Stop recording data to file?")){
+                fetch('/stop_recording', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => alert("Recording stopped. You can download the data now."))
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function downloadFile() {
+            window.location.href = "/download";
+        }
+        
+        function rebootSystem() {
+            if (confirm("Have you downloaded the file? If you press OK, the Raspberry will REBOOT.")) {
+                fetch('/reboot', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.body.style.backgroundColor = "gray";
+                    document.body.innerHTML = "<h1 style='color:white; text-align:center;'>REBOOTING SYSTEM...</h1>";
+                });
+            }
+        }
+
+        function powerOffSystem() {
+            if (confirm("Have you downloaded the file? If you press OK, the Raspberry will SHUT DOWN.")) {
+                fetch('/poweroff', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.body.style.backgroundColor = "black";
+                    document.body.innerHTML = "<h1 style='color:white; text-align:center;'>SYSTEM OFF</h1>";
+                });
+            }
+        }
+    </script>
 </body>
 </html>
