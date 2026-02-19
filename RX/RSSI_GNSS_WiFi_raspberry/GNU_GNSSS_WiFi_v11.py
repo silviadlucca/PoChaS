@@ -231,8 +231,8 @@ if __name__ == '__main__':
             
             if recording:
                 # Generar timestamp para el nuevo archivo
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                current_filename = os.path.join(script_dir, f"Rx_pruebafinalfinal_{timestamp}.txt")
+                timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+                current_filename = os.path.join(script_dir, f"{timestamp}_Rxfile.txt")
                 print(f"Abriendo nuevo archivo de medidas: {current_filename}")
                 
                 with open(current_filename, 'w') as txt_file:
