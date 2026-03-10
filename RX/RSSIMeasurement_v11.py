@@ -26,7 +26,7 @@ class RSSIMeasurement(gr.top_block):
 
         # Constants
         self.samp_rate = samp_rate
-        self.fm = 100e3  # Measurement frequency
+        self.fm = 50e3  # Measurement frequency
 
         # Parameters
         self.freq = freq
@@ -93,8 +93,7 @@ class RSSIMeasurement(gr.top_block):
 
         # Signal magnitude and processing
         self.complex_to_mag = blocks.complex_to_mag_squared(1)
-        self.moving_avg = blocks.moving_average_ff(int(self.samp_rate), 1/(self.samp_rate*4), 1000, 1)
-        #self.moving_avg = blocks.moving_average_ff(int(self.samp_rate), 1/(self.samp_rate), 4000, 1)
+        self.moving_avg = blocks.moving_average_ff(int(self.samp_rate), 1/(self.samp_rate), 4000, 1)
         self.log_conv = blocks.nlog10_ff(10, 1, 0)
 
         # Control blocks
