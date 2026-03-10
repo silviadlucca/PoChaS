@@ -208,6 +208,7 @@ if __name__ == '__main__':
     gain=20
     output_prefix='Measure'
     max_iterations = float('inf')
+    samp_rate = 1e6 # has to be between the values of 0.25e6 and 2e6
     
     setup_hotspot()
     time.sleep(5)
@@ -251,7 +252,7 @@ if __name__ == '__main__':
 
                             if data:
                                 t_stamp, latitude, longitude, altitude, hdop = data
-                                level = run_measurement(usrp_serial, freq, gain, output_prefix, max_iterations)
+                                level = run_measurement(usrp_serial, freq, gain, output_prefix, samp_rate, max_iterations)
                                 level2 = int(level*100)/100
                                 battery_level = 100 # Puedes restaurar psutil.sensors_battery() si tu hardware lo soporta
 

@@ -21,11 +21,11 @@ from gnuradio.filter import firdes
 from gnuradio.fft import window
 
 class RSSIMeasurement(gr.top_block):
-    def __init__(self, usrp_serial, freq, gain, output_file):
+    def __init__(self, usrp_serial, freq, gain, output_file, samp_rate=1e6):
         gr.top_block.__init__(self, "RSSI Measurement", catch_exceptions=True)
 
         # Constants
-        self.samp_rate = 1e6
+        self.samp_rate = samp_rate
         self.fm = 100e3  # Measurement frequency
 
         # Parameters
@@ -86,8 +86,8 @@ class RSSIMeasurement(gr.top_block):
             1,
             firdes.band_pass(
                 1, self.samp_rate,
-                self.fm - 50e3, self.fm + 50e3,
-                100e3, window.WIN_HAMMING, 6.76
+                self.fm - 35e3, self.fm + 35e3,
+                40e3, window.WIN_HAMMING, 6.76
             )
         )
 
@@ -102,7 +102,7 @@ class RSSIMeasurement(gr.top_block):
         self.head_block = blocks.head(gr.sizeof_float*1, 1)
         self.stream_mux = blocks.stream_mux(gr.sizeof_float*1, (1, 1))
 
-def run_measurement(usrp_serial,freq, gain, output_prefix, max_iterations=None):
+def run_measurement(usrp_serial,freq, gain, output_prefix, samp_rate, max_iterations=None):
     """
     Run measurement loop with improved handling
 
@@ -116,7 +116,8 @@ def run_measurement(usrp_serial,freq, gain, output_prefix, max_iterations=None):
         usrp_serial,
         freq=freq,
         gain=gain,
-        output_file=f"Measure_BIN.bin"
+        output_file=f"Measure_BIN.bin",
+        samp_rate=samp_rate
     )
 
     # Setup graceful shutdown
