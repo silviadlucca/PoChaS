@@ -1,0 +1,9 @@
+          
+[Desktop Entry]
+Type=Application
+Name=AutoRadio
+
+Exec=lxterminal -e  /home/castiello/lanzador_rx.sh
+X-GNOME-Autostart-enabled=true
+
+
