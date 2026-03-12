@@ -204,8 +204,9 @@ if __name__ == '__main__':
     
     release_port(port=5000)
 
-    freq= 2.4e9
-    gain=20
+    #freq= 2.4e9
+    freq= 433e6
+    gain=40
     output_prefix='Measure'
     max_iterations = float('inf')
     samp_rate = 1e6 # has to be between the values of 0.25e6 and 2e6

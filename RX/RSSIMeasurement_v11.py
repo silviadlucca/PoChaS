@@ -26,7 +26,7 @@ class RSSIMeasurement(gr.top_block):
 
         # Constants
         self.samp_rate = samp_rate
-        self.fm = 50e3  # Measurement frequency
+        self.fm = 100e3  # Measurement frequency
 
         # Parameters
         self.freq = freq
@@ -86,8 +86,8 @@ class RSSIMeasurement(gr.top_block):
             1,
             firdes.band_pass(
                 1, self.samp_rate,
-                self.fm - 35e3, self.fm + 35e3,
-                40e3, window.WIN_HAMMING, 6.76
+                self.fm - 50e3, self.fm + 50e3,
+                100e3, window.WIN_HAMMING, 6.76
             )
         )
 
