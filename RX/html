@@ -1,208 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Data</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-        }
-        .data {
-            margin-bottom: 20px;
-        }
-    </style>
-</head>
-<body>
-    <h1>GPS Data</h1>
-    <div id="gps-data">
-        <p><i> Connecting to system...</i></p>
-    </div>
-
-    <div id="default-warning" style="background-color: #ff4444; color: white; padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
-        ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
-    </div>
-
-    <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; margin-bottom: 20px; width: 80%; margin-left: auto; margin-right: auto; box-sizing: border-box;">
-        <h3 style="margin-top: 0;">⚙️ USRP Configuration</h3>
-        
-        <input type="file" id="jsonFileInput" accept=".json" style="margin-bottom: 15px; display: block;">
-        
-        <button onclick="sendConfig()" style="
-            background-color: #3498db; 
-            color: white; padding: 10px 15px; text-align: center; 
-            font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
-            Apply Configuration
-        </button>
-        
-        <p id="status-text" style="margin-top: 15px; font-weight: bold;"></p>
-        
-        <hr style="margin: 15px 0;">
-        <p style="margin: 5px 0;"><b>Current Frequency:</b> <span id="val-freq">2.4e9</span> Hz</p>
-        <p style="margin: 5px 0;"><b>Current Gain:</b> <span id="val-gain">40</span> dB</p>
-        <p style="margin: 5px 0;"><b>Current Sampling:</b> <span id="val-samp">1e6</span> Hz</p>
-    </div>
-    <script>
-        async function fetchData() {
-            try {
-                const response = await fetch('/measure_LCL1');
-                const data = await response.json();
-                updateUI(data);
-            } catch (error) {
-                console.error('Error fetching data:', error);
-            }
-        }
-
-        function updateUI(data) {
-            const gpsDataDiv = document.getElementById('gps-data');
-            gpsDataDiv.innerHTML = `
-                <p><strong>Battery:</strong> ${data.battery_level}</p>
-                <p><strong>Level:</strong> ${data.level}</p>
-                <p><strong>Latitude:</strong> ${data.latitude}</p>
-                <p><strong>Longitude:</strong> ${data.longitude}</p>
-                <p><strong>Altitude:</strong> ${data.altitude}</p>
-            `;
-        }
-
-        setInterval(fetchData, 5000);
-        fetchData();
-    </script>
+@app.route('/configure', methods=['POST'])
+def configure_system():
+    # Declaramos que vamos a usar las variables globales
+    global freq, gain, samp_rate, using_defaults
     
-    <div style="text-align: center; margin-top: 20px;">
-        
-        <button id="btnStart" class="btn" onclick="startRecording()" style="
-            background-color: #F1C40F; /* Amarillo */
-            color: black; padding: 15px 32px; text-align: center; 
-            font-size: 18px; margin: 10px auto; border: none; 
-            border-radius: 8px; width: 80%; display: block;">
-            ▶️ 1. Start / New Recording
-        </button>
-
-        <button id="btnStop" class="btn" onclick="stopRecording()" style="
-            background-color: #92D695; /* Verde */
-            color: white; padding: 15px 32px; text-align: center; 
-            font-size: 18px; margin: 10px auto; border: none; 
-            border-radius: 8px; width: 80%; display: block;">
-            🎥 2. Stop recording
-        </button>
-        
-        <button id="btnDown" class="btn" onclick="downloadFile()" style="
-            background-color: #7DB5E3; /* Azul */
-            color: white; padding: 15px 32px; text-align: center; 
-            font-size: 18px; margin: 10px auto; border: none; 
-            border-radius: 8px; width: 80%; display: block;">
-            📥 3. Download data (.txt)
-        </button>
-
-        <button id="btnOff" class="btn" onclick="rebootSystem()" style="
-            background-color: #E67E22; /* Naranja */
-            color: white; padding: 15px 32px; text-align: center; 
-            font-size: 18px; margin: 10px auto; border: none; 
-            border-radius: 8px; width: 80%; display: block;">
-            🔄 4. Reboot
-        </button>
-
-        <button id="btnPower" class="btn" onclick="powerOffSystem()" style="
-            background-color: #DE5D54; /* Rojo */
-            color: white; padding: 15px 32px; text-align: center; 
-            font-size: 18px; margin: 10px auto; border: none; 
-            border-radius: 8px; width: 80%; display: block;">
-            🛑 5. Power Off
-        </button>
-    </div>
-
-    <script>
-        function startRecording() {
-            fetch('/start_recording', { method: 'POST' })
-            .then(res => res.json())
-            .then(data => alert(data.status))
-            .catch(error => console.error('Error:', error));
-        }
-
-        function stopRecording(){
-            if(confirm("Stop recording data to file?")){
-                fetch('/stop_recording', { method: 'POST' })
-                .then(res => res.json())
-                .then(data => alert("Recording stopped. You can download the data now."))
-                .catch(error => console.error('Error:', error));
-            }
-        }
-
-        function downloadFile() {
-            window.location.href = "/download";
-        }
-        
-        function rebootSystem() {
-            if (confirm("Have you downloaded the file? If you press OK, the Raspberry will REBOOT.")) {
-                fetch('/reboot', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    document.body.style.backgroundColor = "gray";
-                    document.body.innerHTML = "<h1 style='color:white; text-align:center;'>REBOOTING SYSTEM...</h1>";
-                });
-            }
-        }
-
-        function powerOffSystem() {
-            if (confirm("Have you downloaded the file? If you press OK, the Raspberry will SHUT DOWN.")) {
-                fetch('/poweroff', { method: 'POST' })
-                .then(response => response.json())
-                .then(data => {
-                    document.body.style.backgroundColor = "black";
-                    document.body.innerHTML = "<h1 style='color:white; text-align:center;'>SYSTEM OFF</h1>";
-                });
-            }
-        }
-
-        // INICIO DE LO NUEVO: Función para enviar el JSON
-        function sendConfig() {
-            const fileInput = document.getElementById('jsonFileInput');
-            const statusText = document.getElementById('status-text');
-            const warningBox = document.getElementById('default-warning');
+    # 1. Comprobamos si la petición incluye un archivo JSON válido
+    if 'file' in request.files and request.files['file'].filename.endswith('.json'):
+        try:
+            file = request.files['file']
+            data = json.load(file)
             
-            const formData = new FormData();
+            # Usamos .get() para leer el valor. Si no existe en el JSON, usa el valor de la derecha.
+            freq = float(data.get('Frequency_Hz', 2.4e9))
+            gain = float(data.get('Rx_amplifier_gain_dB', 40))
+            samp_rate = float(data.get('Sampling_rate_Hz', 1e6))
             
-            if (fileInput.files.length > 0) {
-                formData.append('file', fileInput.files[0]);
-                statusText.innerText = "⏳ Sending file...";
-                statusText.style.color = "black";
-            } else {
-                statusText.innerText = "⏳ Requesting default values...";
-                statusText.style.color = "black";
-            }
-
-            fetch('/param', {
-                method: 'POST',
-                body: formData
+            using_defaults = False
+            print(f">>> Config cargada: Freq={freq/1e6}MHz, Gain={gain}dB, SampRate={samp_rate/1e6}MHz")
+            
+            return jsonify({
+                "status": "success", 
+                "message": "Configuración aplicada correctamente.", 
+                "using_defaults": False,
+                "Frequency_Hz": freq, 
+                "Rx_amplifier_gain_dB": gain, 
+                "Sampling_rate_Hz": samp_rate
             })
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('val-freq').innerText = data.Frequency_Hz || "2.4e9";
-                document.getElementById('val-gain').innerText = data.Rx_amplifier_gain_dB || "40";
-                document.getElementById('val-samp').innerText = data.Sampling_rate_Hz || "1e6";
-                
-                if (data.using_defaults) {
-                    warningBox.style.display = 'block';
-                    statusText.innerText = "⚠️ " + data.message;
-                    statusText.style.color = "#d9534f";
-                } else {
-                    warningBox.style.display = 'none';
-                    statusText.innerText = "✅ " + data.message;
-                    statusText.style.color = "green";
-                }
-            })
-            .catch(error => {
-                statusText.innerText = "❌ Connection error with the server.";
-                statusText.style.color = "red";
-                console.error('Error:', error);
-            });
-        }
+            
+        except Exception as e:
+            print(f"Error leyendo JSON: {e}")
+            return jsonify({"status": "error", "message": f"Error leyendo el JSON: {str(e)}"}), 400
 
-        // Ejecutar al inicio para cargar los valores por defecto en la pantalla
-        window.onload = function() {
-            sendConfig();
-        };
-        // FIN DE LO NUEVO
-    </script>
-</body>
-</html>
+    # 2. Si no se subió ningún archivo, forzamos todos los valores por defecto
+    freq = 2.4e9
+    gain = 40
+    samp_rate = 1e6
+    using_defaults = True
+    
+    print(">>> Sin JSON. Aplicando valores por defecto.")
+    
+    return jsonify({
+        "status": "warning", 
+        "message": "Usando valores por defecto (2.4GHz, 40dB, 1MHz).", 
+        "using_defaults": True,
+        "Frequency_Hz": freq, 
+        "Rx_amplifier_gain_dB": gain, 
+        "Sampling_rate_Hz": samp_rate
+    })
