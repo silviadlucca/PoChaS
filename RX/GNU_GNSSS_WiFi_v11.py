@@ -27,6 +27,8 @@ import psutil
 import subprocess
 import re
 
+import json
+
 app = Flask(__name__,template_folder='.')
 CORS(app)
 
@@ -35,7 +37,10 @@ measure = {}
 server_running = True
 recording = True
 current_filename = None
-shutdown_action = "reboot"  # Puede ser "reboot" o "poweroff"
+shutdown_action = "poweroff"  # Puede ser "reboot" o "poweroff"
+freq = 2.4e9
+gain = 40
+samp_rate = 1e6
 
 def release_port(port):
     try:

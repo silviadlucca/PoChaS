@@ -19,6 +19,29 @@
         <p><i> Connecting to system...</i></p>
     </div>
 
+    <div id="default-warning" style="background-color: #ff4444; color: white; padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
+        ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
+    </div>
+
+    <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; margin-bottom: 20px; width: 80%; margin-left: auto; margin-right: auto; box-sizing: border-box;">
+        <h3 style="margin-top: 0;">⚙️ USRP Configuration</h3>
+        
+        <input type="file" id="jsonFileInput" accept=".json" style="margin-bottom: 15px; display: block;">
+        
+        <button onclick="sendConfig()" style="
+            background-color: #3498db; 
+            color: white; padding: 10px 15px; text-align: center; 
+            font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            Apply Configuration
+        </button>
+        
+        <p id="status-text" style="margin-top: 15px; font-weight: bold;"></p>
+        
+        <hr style="margin: 15px 0;">
+        <p style="margin: 5px 0;"><b>Current Frequency:</b> <span id="val-freq">2.4e9</span> Hz</p>
+        <p style="margin: 5px 0;"><b>Current Gain:</b> <span id="val-gain">40</span> dB</p>
+        <p style="margin: 5px 0;"><b>Current Sampling:</b> <span id="val-samp">1e6</span> Hz</p>
+    </div>
     <script>
         async function fetchData() {
             try {
@@ -130,6 +153,56 @@
                 });
             }
         }
+
+        // INICIO DE LO NUEVO: Función para enviar el JSON
+        function sendConfig() {
+            const fileInput = document.getElementById('jsonFileInput');
+            const statusText = document.getElementById('status-text');
+            const warningBox = document.getElementById('default-warning');
+            
+            const formData = new FormData();
+            
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+                statusText.innerText = "⏳ Sending file...";
+                statusText.style.color = "black";
+            } else {
+                statusText.innerText = "⏳ Requesting default values...";
+                statusText.style.color = "black";
+            }
+
+            fetch('/configure', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('val-freq').innerText = data.Frequency_Hz || "2.4e9";
+                document.getElementById('val-gain').innerText = data.Rx_amplifier_gain_dB || "40";
+                document.getElementById('val-samp').innerText = data.Sampling_rate_Hz || "1e6";
+                
+                if (data.using_defaults) {
+                    warningBox.style.display = 'block';
+                    statusText.innerText = "⚠️ " + data.message;
+                    statusText.style.color = "#d9534f";
+                } else {
+                    warningBox.style.display = 'none';
+                    statusText.innerText = "✅ " + data.message;
+                    statusText.style.color = "green";
+                }
+            })
+            .catch(error => {
+                statusText.innerText = "❌ Connection error with the server.";
+                statusText.style.color = "red";
+                console.error('Error:', error);
+            });
+        }
+
+        // Ejecutar al inicio para cargar los valores por defecto en la pantalla
+        window.onload = function() {
+            sendConfig();
+        };
+        // FIN DE LO NUEVO
     </script>
 </body>
 </html>

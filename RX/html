@@ -171,7 +171,7 @@
                 statusText.style.color = "black";
             }
 
-            fetch('/configure', {
+            fetch('/param', {
                 method: 'POST',
                 body: formData
             })
