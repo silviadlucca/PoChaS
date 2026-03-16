@@ -1,0 +1,18 @@
+    .then(response => response.json())
+    .then(data => {
+        // Actualizamos los textos en pantalla usando las nuevas claves
+        document.getElementById('val-freq').innerText = data.Frequency_Hz || "2.4e9";
+        document.getElementById('val-gain').innerText = data.Rx_amplifier_gain_dB || "40";
+        document.getElementById('val-samp').innerText = data.Sampling_rate_Hz || "1e6";
+        
+        // Encender o apagar el aviso rojo
+        if (data.using_defaults) {
+            warningBox.style.display = 'block';
+            statusText.innerText = "⚠️ " + data.message;
+            statusText.style.color = "#d9534f";
+        } else {
+            warningBox.style.display = 'none';
+            statusText.innerText = "✅ " + data.message;
+            statusText.style.color = "green";
+        }
+    })
