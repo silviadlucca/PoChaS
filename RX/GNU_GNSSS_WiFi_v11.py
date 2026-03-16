@@ -119,45 +119,92 @@ def get_data():
 def start_recording_cmd():
     global recording
     if not recording:
-        print(">>> Iniciando nueva grabación...")
+        print(">>> Starting new recording...")
         recording = True
-        return jsonify({"status": "Grabación iniciada en un nuevo archivo."})
-    return jsonify({"status": "Ya hay una grabación en curso."})
+        return jsonify({"status": "Recording started in a new file"})
+    return jsonify({"status": "There is already a recording in place"})
     
 @app.route('/stop_recording',methods=['POST'])
 def stop_recording_cmd():
     global recording
-    print(">>> Deteniendo grabación...")
+    print(">>> Stopping recording...")
     recording = False
-    return jsonify({"status":"Grabación detenida. Archivo cerrado."})
+    return jsonify({"status":"Recording stopped. File closed."})
 
 @app.route('/download')
 def download_file():
     global current_filename
     if current_filename and os.path.exists(current_filename):
-        print(f">>> 📤 Enviando archivo: {current_filename}")
+        print(f">>> 📤 Sending file: {current_filename}")
         return send_file(current_filename, as_attachment=True)
     else:
-        return "Archivo no encontrado", 404
+        return "File not found", 404
         
 @app.route('/reboot', methods=['POST'])
 def reboot_cmd():
     global server_running, shutdown_action
-    print(">>> Orden de reinicio recibida.")
+    print(">>> Reboot order received...")
     shutdown_action = "reboot"
     server_running = False
-    return jsonify({"status": "Reiniciando..."})
+    return jsonify({"status": "Reseting..."})
 
 @app.route('/poweroff', methods=['POST'])
 def poweroff_cmd():
     global server_running, shutdown_action
-    print(">>> Orden de apagado recibida.")
+    print(">>> Shutdown order received...")
     shutdown_action = "poweroff"
     server_running = False
-    return jsonify({"status": "Apagando..."})
+    return jsonify({"status": "Shutting down..."})
+@app.route('/param', methods=['POST'])
+def configure_system():
+    # Declaramos que vamos a usar las variables globales
+    global freq, gain, samp_rate, using_defaults
+    
+    # 1. Comprobamos si la petición incluye un archivo JSON válido
+    if 'file' in request.files and request.files['file'].filename.endswith('.json'):
+        try:
+            file = request.files['file']
+            data = json.load(file)
+            
+            freq = float(data.get('Frequency_Hz', 2.4e9))
+            gain = float(data.get('Rx_amplifier_gain_dB', 40))
+            samp_rate = float(data.get('Sampling_rate_Hz', 1e6))
+            
+            print(f">>> Config. loaded: Freq={freq/1e6}MHz, Gain={gain}dB, SampRate={samp_rate/1e6}MHz")
+            
+            return jsonify({
+                "status": "success", 
+                "message": "Configuration correct.", 
+                "using_defaults": False,
+                "Frequency_Hz": freq, 
+                "Rx_amplifier_gain_dB": gain, 
+                "Sampling_rate_Hz": samp_rate
+            })
+            
+        except Exception as e:
+            print(f"Error leyendo JSON: {e}")
+            return jsonify({"status": "error", "message": f"Error reading the JSON: {str(e)}"}), 400
+
+    freq = 2.4e9
+    gain = 40
+    samp_rate = 1e6
+    using_defaults = True
+    
+    print(">>> No JSON found. Applying values by default.")
+    
+    return jsonify({
+        "status": "warning", 
+        "message": "Using default values (2.4GHz, 40dB, 1MHz).", 
+        "using_defaults": True,
+        "Frequency_Hz": freq, 
+        "Rx_amplifier_gain_dB": gain, 
+        "Sampling_rate_Hz": samp_rate
+    })
+
+
 
 def start_flask():
-    print("Iniciando servidor Flask...")
+    print("Starting Flask server...")
     app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
 
 def get_usrp_serial():
@@ -225,7 +272,7 @@ if __name__ == '__main__':
     usrp_serial=get_usrp_serial()
 
     if not usrp_serial:
-        print("Fatal: No se pudo encontrar el USRP. Saliendo.")
+        print("Fatal: USRP was not found. Exiting.")
         sys.exit(1)
     
     # Iniciar el hilo del servidor web de forma independiente
@@ -240,7 +287,7 @@ if __name__ == '__main__':
                 # Generar timestamp para el nuevo archivo
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 current_filename = os.path.join(script_dir, f"{timestamp}_Rxfile.txt")
-                print(f"Abriendo nuevo archivo de medidas: {current_filename}")
+                print(f"Opening new measurements file: {current_filename}")
                 
                 with open(current_filename, 'w') as txt_file:
                     # Escribir cabecera de metadatos
@@ -270,19 +317,19 @@ if __name__ == '__main__':
                                 
                             sleep(1)
                         except Exception as e:
-                            print(f"Error en el bucle de medida: {e}")
+                            print(f"Error in the measurement loop: {e}")
                 
-                print("Grabación detenida. Archivo cerrado de forma segura.")
+                print("Recording stopped. File closed in a secure way.")
             else:
                 # Si recording es False, esperamos sin consumir recursos de CPU
                 sleep(1)
                 
     except PermissionError:
-        print("CRITICAL ERROR: Sin permisos de escritura.")
+        print("CRITICAL ERROR: No writing permissions.")
     except Exception as e:
-        print(f"Error crítico en el bucle principal: {e}")
+        print(f"CRITICAL ERROR: Main loop: {e}")
     finally:
-        print(f"Finalizando ejecución. Preparando {shutdown_action}...")
+        print(f"Ending execution. Preparing {shutdown_action}...")
         time.sleep(2)
         if shutdown_action == "poweroff":
             subprocess.run("sudo poweroff", shell=True)

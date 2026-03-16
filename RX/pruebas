@@ -1,0 +1,48 @@
+@app.route('/configure', methods=['POST'])
+def configure_system():
+    # Declaramos que vamos a usar las variables globales
+    global freq, gain, samp_rate, using_defaults
+    
+    # 1. Comprobamos si la petición incluye un archivo JSON válido
+    if 'file' in request.files and request.files['file'].filename.endswith('.json'):
+        try:
+            file = request.files['file']
+            data = json.load(file)
+            
+            # Usamos .get() para leer el valor. Si no existe en el JSON, usa el valor de la derecha.
+            freq = float(data.get('Frequency_Hz', 2.4e9))
+            gain = float(data.get('Rx_amplifier_gain_dB', 40))
+            samp_rate = float(data.get('Sampling_rate_Hz', 1e6))
+            
+            using_defaults = False
+            print(f">>> Config cargada: Freq={freq/1e6}MHz, Gain={gain}dB, SampRate={samp_rate/1e6}MHz")
+            
+            return jsonify({
+                "status": "success", 
+                "message": "Configuración aplicada correctamente.", 
+                "using_defaults": False,
+                "Frequency_Hz": freq, 
+                "Rx_amplifier_gain_dB": gain, 
+                "Sampling_rate_Hz": samp_rate
+            })
+            
+        except Exception as e:
+            print(f"Error leyendo JSON: {e}")
+            return jsonify({"status": "error", "message": f"Error leyendo el JSON: {str(e)}"}), 400
+
+    # 2. Si no se subió ningún archivo, forzamos todos los valores por defecto
+    freq = 2.4e9
+    gain = 40
+    samp_rate = 1e6
+    using_defaults = True
+    
+    print(">>> Sin JSON. Aplicando valores por defecto.")
+    
+    return jsonify({
+        "status": "warning", 
+        "message": "Usando valores por defecto (2.4GHz, 40dB, 1MHz).", 
+        "using_defaults": True,
+        "Frequency_Hz": freq, 
+        "Rx_amplifier_gain_dB": gain, 
+        "Sampling_rate_Hz": samp_rate
+    })
