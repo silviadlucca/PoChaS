@@ -3,7 +3,7 @@
 Type=Application
 Name=AutoRadio
 
-Exec=lxterminal -e  /home/castiello/lanzador_rx.sh
+Exec=lxterminal -e  /home/pi/PoChaS/RX/start_rx.sh
 X-GNOME-Autostart-enabled=true
 
 
