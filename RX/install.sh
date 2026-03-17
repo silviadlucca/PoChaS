@@ -8,6 +8,9 @@ sudo apt install -y gnuradio
 pip install pynmea2 --break-system-packages
 pip install flask_cors --break-system-packages
 
+sudo apt install -y uhd-host
+sudo uhd_images_downloader
+
 chmod +x ~/PoChaS/RX/start_rx.sh
 
 mkdir -p ~/.config/autostart
