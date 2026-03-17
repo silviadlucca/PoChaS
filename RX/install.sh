@@ -4,7 +4,8 @@ echo "Starting RX configuration..."
 
 echo "Installing dependencies and GNU (this may take a while)"
 sudo apt update
-sudo apt install -y gnuradio pynmea2
+sudo apt install -y gnuradio
+pip install pynmea2 --break-system-packages
 
 chmod +x ~/PoChaS/RX/start_rx.sh
 
