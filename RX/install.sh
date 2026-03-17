@@ -6,7 +6,7 @@ echo "Installing dependencies and GNU (this may take a while)"
 sudo apt update
 sudo apt install -y gnuradio python3-pynmea2
 
-chmod +x ~/PoChaS/RX/lanzador_rx.sh
+chmod +x ~/PoChaS/RX/start_rx.sh
 
 mkdir -p ~/.config/autostart
 
