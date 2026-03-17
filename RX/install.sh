@@ -6,6 +6,7 @@ echo "Installing dependencies and GNU (this may take a while)"
 sudo apt update
 sudo apt install -y gnuradio
 pip install pynmea2 --break-system-packages
+sudo apt install -y flask_cors
 
 chmod +x ~/PoChaS/RX/start_rx.sh
 
