@@ -240,11 +240,20 @@ def get_usrp_serial():
         print(f"Unexpected error detecting USRP: {e}")
         return None
 
+def get_pi_temperature():
+    """Reads the Raspberry Pi CPU temperature in degrees Celsius."""
+    try:
+        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
+            temp_c = float(f.read()) / 1000.0
+        return round(temp_c, 1)
+    except Exception as e:
+        print(f"Error reading temperature: {e}")
+        return 0.0
 
-def write_measure(battery_level, level, latitude, longitude, altitude):
+def write_measure(temperature, level, latitude, longitude, altitude):
     global measure
     measure = {
-        "battery_level": battery_level,
+        "temperature": temperature,
         "level": level,
         "latitude": latitude,
         "longitude": longitude,
@@ -307,13 +316,13 @@ if __name__ == '__main__':
                                 t_stamp, latitude, longitude, altitude, hdop = data
                                 level = run_measurement(usrp_serial, freq, gain, output_prefix, samp_rate, max_iterations)
                                 level2 = int(level*100)/100
-                                battery_level = 100 # Puedes restaurar psutil.sensors_battery() si tu hardware lo soporta
+                                temperature = get_pi_temperature()
 
                                 txt_file.write(f"{latitude},{longitude},{level2},{hdop},{t_stamp}\n")
                                 txt_file.flush()
-                                print(f"{level2}  {latitude} {longitude} {altitude} {t_stamp} {battery_level}\n")
+                                print(f"{level2}  {latitude} {longitude} {altitude} {t_stamp} {temperature}\n")
 
-                                write_measure(battery_level, level2, latitude, longitude, altitude)
+                                write_measure(temperature, level2, latitude, longitude, altitude)
                                 
                             sleep(1)
                         except Exception as e:
