@@ -284,16 +284,14 @@ if __name__ == '__main__':
         print("Fatal: USRP was not found. Exiting.")
         sys.exit(1)
     
-    # Iniciar el hilo del servidor web de forma independiente
     flask_thread = threading.Thread(target=start_flask)
     flask_thread.start()
     
     try:
-        # Bucle exterior: Mantiene el programa vivo mientras el servidor esté activo
         while server_running:
             
             if recording:
-                # Generar timestamp para el nuevo archivo
+                # Timestamp
                 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
                 current_filename = os.path.join(script_dir, f"{timestamp}_Rxfile.txt")
                 print(f"Opening new measurements file: {current_filename}")
@@ -305,6 +303,7 @@ if __name__ == '__main__':
                     txt_file.write(f"# Frequency: {freq/1e6} MHz\n")
                     txt_file.write(f"# Gain: {gain} dB\n")
                     txt_file.write("# Measurement\tRSSI (dB)\n")
+                    txt_file.write("Latitude\tLongitude\tLevel\tHDOP\tTimestamp\tTemperature\n")
                     txt_file.flush()
                     
                     # Bucle interior: Captura de datos mientras 'recording' sea True
@@ -318,7 +317,7 @@ if __name__ == '__main__':
                                 level2 = int(level*100)/100
                                 temperature = get_pi_temperature()
 
-                                txt_file.write(f"{latitude},{longitude},{level2},{hdop},{t_stamp}\n")
+                                txt_file.write(f"{latitude},{longitude},{level2},{hdop},{t_stamp},{temperature}\n")
                                 txt_file.flush()
                                 print(f"{level2}  {latitude} {longitude} {altitude} {t_stamp} {temperature}\n")
 
@@ -330,7 +329,6 @@ if __name__ == '__main__':
                 
                 print("Recording stopped. File closed in a secure way.")
             else:
-                # Si recording es False, esperamos sin consumir recursos de CPU
                 sleep(1)
                 
     except PermissionError:
