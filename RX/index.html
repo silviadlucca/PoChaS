@@ -11,10 +11,57 @@
         .data {
             margin-bottom: 20px;
         }
+
+        /* Estilo para las tarjetas en general */
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    border: 1px solid #e2e8f0;
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Cuadrícula para los datos del GPS */
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.data-item {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+.data-label {
+    display: block;
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.data-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+}
     </style>
 </head>
 <body>
-    <h1>GPS Data</h1>
+    <h1 style="text-align: center; color: #2c3e50; font-family: sans-serif;">📡 GPS Data</h1>
     <div id="gps-data">
         <p><i> Connecting to system...</i></p>
     </div>
@@ -54,13 +101,20 @@
         }
 
         function updateUI(data) {
-            const gpsDataDiv = document.getElementById('gps-data');
+        const gpsDataDiv = document.getElementById('gps-data');
+    
+        const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
+        const level = data.level !== undefined ? data.level + ' dB' : '--';
+        const lat = data.latitude !== undefined ? Number(data.latitude).toFixed(6) : '--';
+        const lon = data.longitude !== undefined ? Number(data.longitude).toFixed(6) : '--';
+        const alt = data.altitude !== undefined ? Number(data.altitude).toFixed(1) + ' m' : '--';
+
             gpsDataDiv.innerHTML = `
-                <p><strong>Temperature:</strong> ${data.temperature}</p>
-                <p><strong>Level:</strong> ${data.level}</p>
-                <p><strong>Latitude:</strong> ${data.latitude}</p>
-                <p><strong>Longitude:</strong> ${data.longitude}</p>
-                <p><strong>Altitude:</strong> ${data.altitude}</p>
+                <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${temp}</span></div>
+                <div class="data-item"><span class="data-label">📶 Level</span><span class="data-value">${level}</span></div>
+                <div class="data-item"><span class="data-label">🌍 Latitude</span><span class="data-value">${lat}</span></div>
+                <div class="data-item"><span class="data-label">📍 Longitude</span><span class="data-value">${lon}</span></div>
+                <div class="data-item"><span class="data-label">⛰️ Altitude</span><span class="data-value">${alt}</span></div>
             `;
         }
 
