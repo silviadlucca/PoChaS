@@ -250,14 +250,18 @@ def get_pi_temperature():
         print(f"Error reading temperature: {e}")
         return 0.0
 
+update_counter = 0
+
 def write_measure(temperature, level, latitude, longitude, altitude):
-    global measure
+    global measure, update_counter
+    update_counter += 1
     measure = {
         "temperature": temperature,
         "level": level,
         "latitude": latitude,
         "longitude": longitude,
-        "altitude": altitude
+        "altitude": altitude,
+        "update_id": update_counter
     }
 
 

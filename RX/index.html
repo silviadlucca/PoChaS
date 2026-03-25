@@ -66,8 +66,12 @@
         <p><i> Connecting to system...</i></p>
     </div>
 
-    <div id="default-warning" style="background-color: #ff4444; color: white; padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
+    <div id="default-warning" style="background-color: #f1d554; color: rgb(0, 0, 0); padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
         ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
+    </div>
+
+    <div id="connection-warning" style="background-color: #e74c3c; color: white; padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
+        🚨 ERROR: The GPS data are not being received. Please check the connection.
     </div>
 
     <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; margin-bottom: 20px; width: 80%; margin-left: auto; margin-right: auto; box-sizing: border-box;">
@@ -100,9 +104,25 @@
             }
         }
 
+        let lastUpdateId = -1;
+        let lastUpdateTime = Date.now();
+
         function updateUI(data) {
         const gpsDataDiv = document.getElementById('gps-data');
+        const warningBox = document.getElementById('connection-warning');
     
+        if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
+                lastUpdateId = data.update_id;
+                lastUpdateTime = Date.now(); // Reseteamos el reloj
+                warningBox.style.display = 'none';
+            } else {
+                if (Date.now() - lastUpdateTime > 15000) {
+                    warningBox.style.display = 'block';
+                }
+            }
+
+
+
         const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
         const level = data.level !== undefined ? data.level + ' dB' : '--';
         const lat = data.latitude !== undefined ? Number(data.latitude).toFixed(6) : '--';
