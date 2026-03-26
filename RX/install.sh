@@ -41,9 +41,7 @@ sudo nmcli con modify eth0_dhcp ipv4.method auto
 sudo nmcli con modify eth0_dhcp connection.autoconnect-priority 100
 
 sudo nmcli con add type ethernet ifname eth0 con-name eth0_static autoconnect yes
-sudo nmcli con modify eth0_static ipv4.method manual 
-sudo nmcli con modify eth0_static ipv4.addresses 192.168.50.3/24 
-sudo nmcli con modify eth0_static connection.autoconnect-priority 50
+sudo nmcli con modify eth0_static ipv4.addresses 192.168.50.3/24 ipv4.method manual connection.autoconnect-priority 50
 chmod +x ~/PoChaS/RX/start_rx.sh
 
 mkdir -p ~/.config/autostart
