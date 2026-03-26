@@ -53,60 +53,12 @@ def release_port(port):
 
 
 def setup_hotspot():
-    max_retries = 30
-    wifi_ready  =False
-    
-    for i in range(max_retries):
-        try:
-            result = subprocess.check_output(["ip","link","show","wlan0"],stderr = subprocess.STDOUT)
-            wifi_ready = True
-            break
-        except subprocess.CalledProcessError:
-            print("Waiting for wifi...")
-            time.sleep(1)
-    if not wifi_ready:
-            print("ERROR WIFI")
-            return
-            
-    time.sleep(2)
-    
-    subprocess.run(["sudo","iw","reg","set","ES"],check = False)
-    
-    
-    subprocess.run(["sudo","nmcli","connection","delete","rx_hotspot"], stderr = subprocess.DEVNULL, stdout = subprocess.DEVNULL)
-    subprocess.run(["sudo","nmcli","connection","delete","preconfigured"], stderr = subprocess.DEVNULL, stdout = subprocess.DEVNULL)
-    
-    
-    cmd_add = ["sudo", "nmcli", "con", "add",
-                "type", "wifi", "ifname", "wlan0", "con-name",
-                "rx_hotspot", "autoconnect", "yes",
-                "ssid", "rx_wifi"]
-                
-    subprocess.run(cmd_add, check = False)
-    time.sleep(1)
-    
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "802-11-wireless.mode", "ap"], check = False)
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "ipv4.addresses", "192.168.4.1/24"],check = False)
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "ipv4.gateway", "192.168.4.1"], check = False)
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "ipv4.method","shared"], check = False)
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "wifi-sec.key-mgmt", "wpa-psk"], check = False)
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "wifi-sec.psk","pochas123456"],check = False)
-    
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "802-11-wireless.band","bg"],check = False)
-    subprocess.run(["sudo", "nmcli", "con", "modify", "rx_hotspot", "802-11-wireless.channel","6"], check = False)
-    
-    subprocess.run(["sudo","nmcli","con","modify","rx_hotspot","connection.autoconnect-priority","100"],check = False)
-    
-    
     try:
-        subprocess.run(["sudo","nmcli","con","up","rx_hotspot"],check =False)
-        subprocess.run(["sudo","iw","wlan0","set","power_save","off"], check = False)
-        
-        print("Hotspot active:rx_wifi   Password: pochas123456")
+        subprocess.run(["sudo", "nmcli", "con", "up", "rx_hotspot"], check=False, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.run(["sudo", "iw", "wlan0", "set", "power_save", "off"], check=False)
+        print("Hotspot verified: rx_wifi   Password: pochas123456")
     except Exception as e:
-        print(f"Error configuring hotspot: {e}")
-
-
+        print(f"Error bringing up hotspot: {e}")
 @app.route('/')
 def index():
     return render_template('index.html')
