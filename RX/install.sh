@@ -44,6 +44,8 @@ sudo nmcli con add type ethernet ifname eth0 con-name eth0_static autoconnect ye
 sudo nmcli con modify eth0_static ipv4.addresses 192.168.50.3/24 ipv4.method manual connection.autoconnect-priority 50
 chmod +x ~/PoChaS/RX/start_rx.sh
 
+sudo raspi-config nonint do_vnc 0
+
 mkdir -p ~/.config/autostart
 ln -sf ~/PoChaS/RX/AutoRadio.desktop ~/.config/autostart/AutoRadio.desktop
 
