@@ -21,11 +21,11 @@ from gnuradio.filter import firdes
 from gnuradio.fft import window
 
 class RSSIMeasurement(gr.top_block):
-    def __init__(self, usrp_serial, freq, gain, output_file):
+    def __init__(self, usrp_serial, freq, gain, output_file, samp_rate=1e6):
         gr.top_block.__init__(self, "RSSI Measurement", catch_exceptions=True)
 
         # Constants
-        self.samp_rate = 1e6
+        self.samp_rate = samp_rate
         self.fm = 100e3  # Measurement frequency
 
         # Parameters
@@ -58,13 +58,7 @@ class RSSIMeasurement(gr.top_block):
     def _setup_usrp(self, usrp_serial):
         """Configure USRP source block"""
 
-        # Instead of just: serial_num="serial="+usrp_serial
-        if usrp_serial is None:
-            print("Error: No USRP serial number provided or detected!")
-        # Handle the error or exit
-        else:
-            serial_num = "serial=" + str(usrp_serial)
-
+        serial_num="serial="+usrp_serial
         usrp = uhd.usrp_source(
             ",".join((serial_num, "")),
             uhd.stream_args(
@@ -84,7 +78,7 @@ class RSSIMeasurement(gr.top_block):
     def _setup_processing_chain(self):
         """Configure signal processing blocks"""
         # Skip initial samples to avoid transients
-        self.initial_skip = blocks.skiphead(gr.sizeof_gr_complex*1, int(self.samp_rate)
+        self.initial_skip = blocks.skiphead(gr.sizeof_gr_complex*1, int(self.samp_rate))
         self.skip_head = blocks.skiphead(gr.sizeof_float*1, int(self.samp_rate))
 
         # Bandpass filter around measurement frequency
@@ -99,7 +93,7 @@ class RSSIMeasurement(gr.top_block):
 
         # Signal magnitude and processing
         self.complex_to_mag = blocks.complex_to_mag_squared(1)
-        self.moving_avg = blocks.moving_average_ff(int(self.samp_rate), 1/self.samp_rate, 4000, 1)
+        self.moving_avg = blocks.moving_average_ff(int(self.samp_rate), 1/(self.samp_rate), 4000, 1)
         self.log_conv = blocks.nlog10_ff(10, 1, 0)
 
         # Control blocks
@@ -107,7 +101,7 @@ class RSSIMeasurement(gr.top_block):
         self.head_block = blocks.head(gr.sizeof_float*1, 1)
         self.stream_mux = blocks.stream_mux(gr.sizeof_float*1, (1, 1))
 
-def run_measurement(usrp_serial,freq, gain, output_prefix, max_iterations=None):
+def run_measurement(usrp_serial,freq, gain, output_prefix, samp_rate, max_iterations=None):
     """
     Run measurement loop with improved handling
 
@@ -121,7 +115,8 @@ def run_measurement(usrp_serial,freq, gain, output_prefix, max_iterations=None):
         usrp_serial,
         freq=freq,
         gain=gain,
-        output_file=f"Measure_BIN.bin"
+        output_file=f"Measure_BIN.bin",
+        samp_rate=samp_rate
     )
 
     # Setup graceful shutdown

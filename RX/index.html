@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPS Data</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .data {
+            margin-bottom: 20px;
+        }
+
+        /* Estilo para las tarjetas en general */
+.card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    margin-bottom: 25px;
+    border: 1px solid #e2e8f0;
+}
+
+.card h3 {
+    margin-top: 0;
+    color: #2c3e50;
+    border-bottom: 2px solid #ecf0f1;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+/* Cuadrícula para los datos del GPS */
+.data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+
+.data-item {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #e2e8f0;
+}
+
+.data-label {
+    display: block;
+    font-size: 13px;
+    color: #666666;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+
+.data-value {
+    font-size: 18px;
+    font-weight: bold;
+    color: #2c3e50;
+}
+    </style>
+</head>
+<body>
+    <h1 style="text-align: center; color: #2c3e50; font-family: sans-serif;">📡 GPS Data</h1>
+    <div id="gps-data">
+        <p><i> Connecting to system...</i></p>
+    </div>
+
+    <div id="default-warning" style="background-color: #f1d554; color: rgb(0, 0, 0); padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
+        ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
+    </div>
+
+    <div id="connection-warning" style="background-color: #e74c3c; color: white; padding: 15px; text-align: center; font-weight: bold; margin-bottom: 20px; border-radius: 8px; display: none; width: 80%; margin-left: auto; margin-right: auto;">
+        🚨 ERROR: The GPS data are not being received. Please check the connection.
+    </div>
+
+    <div style="border: 1px solid #ccc; padding: 15px; border-radius: 8px; background: #f9f9f9; margin-bottom: 20px; width: 80%; margin-left: auto; margin-right: auto; box-sizing: border-box;">
+        <h3 style="margin-top: 0;">⚙️ USRP Configuration</h3>
+        
+        <input type="file" id="jsonFileInput" accept=".json" style="margin-bottom: 15px; display: block;">
+        
+        <button onclick="sendConfig()" style="
+            background-color: #3498db; 
+            color: white; padding: 10px 15px; text-align: center; 
+            font-size: 16px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">
+            Apply Configuration
+        </button>
+        
+        <p id="status-text" style="margin-top: 15px; font-weight: bold;"></p>
+        
+        <hr style="margin: 15px 0;">
+        <p style="margin: 5px 0;"><b>Current Frequency:</b> <span id="val-freq">2.4e9</span> Hz</p>
+        <p style="margin: 5px 0;"><b>Current Gain:</b> <span id="val-gain">40</span> dB</p>
+        <p style="margin: 5px 0;"><b>Current Sampling:</b> <span id="val-samp">1e6</span> Hz</p>
+    </div>
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('/measure_LCL1');
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        let lastUpdateId = -1;
+        let lastUpdateTime = Date.now();
+
+        function updateUI(data) {
+        const gpsDataDiv = document.getElementById('gps-data');
+        const warningBox = document.getElementById('connection-warning');
+    
+        if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
+                lastUpdateId = data.update_id;
+                lastUpdateTime = Date.now(); // Reseteamos el reloj
+                warningBox.style.display = 'none';
+            } else {
+                if (Date.now() - lastUpdateTime > 15000) {
+                    warningBox.style.display = 'block';
+                }
+            }
+
+
+
+        const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
+        const level = data.level !== undefined ? data.level + ' dB' : '--';
+        const lat = data.latitude !== undefined ? Number(data.latitude).toFixed(6) : '--';
+        const lon = data.longitude !== undefined ? Number(data.longitude).toFixed(6) : '--';
+        const alt = data.altitude !== undefined ? Number(data.altitude).toFixed(1) + ' m' : '--';
+
+            gpsDataDiv.innerHTML = `
+                <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${temp}</span></div>
+                <div class="data-item"><span class="data-label">📶 Level</span><span class="data-value">${level}</span></div>
+                <div class="data-item"><span class="data-label">🌍 Latitude</span><span class="data-value">${lat}</span></div>
+                <div class="data-item"><span class="data-label">📍 Longitude</span><span class="data-value">${lon}</span></div>
+                <div class="data-item"><span class="data-label">⛰️ Altitude</span><span class="data-value">${alt}</span></div>
+            `;
+        }
+
+        setInterval(fetchData, 5000);
+        fetchData();
+    </script>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        
+        <button id="btnStart" class="btn" onclick="startRecording()" style="
+            background-color: #F1C40F; /* Amarillo */
+            color: black; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            ▶️ 1. Start / New Recording
+        </button>
+
+        <button id="btnStop" class="btn" onclick="stopRecording()" style="
+            background-color: #92D695; /* Verde */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            🎥 2. Stop recording
+        </button>
+        
+        <button id="btnDown" class="btn" onclick="downloadFile()" style="
+            background-color: #7DB5E3; /* Azul */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            📥 3. Download data (.txt)
+        </button>
+
+        <button id="btnOff" class="btn" onclick="rebootSystem()" style="
+            background-color: #E67E22; /* Naranja */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            🔄 4. Reboot
+        </button>
+
+        <button id="btnPower" class="btn" onclick="powerOffSystem()" style="
+            background-color: #DE5D54; /* Rojo */
+            color: white; padding: 15px 32px; text-align: center; 
+            font-size: 18px; margin: 10px auto; border: none; 
+            border-radius: 8px; width: 80%; display: block;">
+            🛑 5. Power Off
+        </button>
+    </div>
+
+    <script>
+        function startRecording() {
+            fetch('/start_recording', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => alert(data.status))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function stopRecording(){
+            if(confirm("Stop recording data to file?")){
+                fetch('/stop_recording', { method: 'POST' })
+                .then(res => res.json())
+                .then(data => alert("Recording stopped. You can download the data now."))
+                .catch(error => console.error('Error:', error));
+            }
+        }
+
+        function downloadFile() {
+            window.location.href = "/download";
+        }
+        
+        function rebootSystem() {
+            if (confirm("Have you downloaded the file? If you press OK, the Raspberry will REBOOT.")) {
+                fetch('/reboot', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.body.style.backgroundColor = "gray";
+                    document.body.innerHTML = "<h1 style='color:white; text-align:center;'>REBOOTING SYSTEM...</h1>";
+                });
+            }
+        }
+
+        function powerOffSystem() {
+            if (confirm("Have you downloaded the file? If you press OK, the Raspberry will SHUT DOWN.")) {
+                fetch('/poweroff', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    document.body.style.backgroundColor = "black";
+                    document.body.innerHTML = "<h1 style='color:white; text-align:center;'>SYSTEM OFF</h1>";
+                });
+            }
+        }
+
+        // INICIO DE LO NUEVO: Función para enviar el JSON
+        function sendConfig() {
+            const fileInput = document.getElementById('jsonFileInput');
+            const statusText = document.getElementById('status-text');
+            const warningBox = document.getElementById('default-warning');
+            
+            const formData = new FormData();
+            
+            if (fileInput.files.length > 0) {
+                formData.append('file', fileInput.files[0]);
+                statusText.innerText = "⏳ Sending file...";
+                statusText.style.color = "black";
+            } else {
+                statusText.innerText = "⏳ Requesting default values...";
+                statusText.style.color = "black";
+            }
+
+            fetch('/param', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('val-freq').innerText = data.Frequency_Hz || "2.4e9";
+                document.getElementById('val-gain').innerText = data.Rx_amplifier_gain_dB || "40";
+                document.getElementById('val-samp').innerText = data.Sampling_rate_Hz || "1e6";
+                
+                if (data.using_defaults) {
+                    warningBox.style.display = 'block';
+                    statusText.innerText = "⚠️ " + data.message;
+                    statusText.style.color = "#d9534f";
+                } else {
+                    warningBox.style.display = 'none';
+                    statusText.innerText = "✅ " + data.message;
+                    statusText.style.color = "green";
+                }
+            })
+            .catch(error => {
+                statusText.innerText = "❌ Connection error with the server.";
+                statusText.style.color = "red";
+                console.error('Error:', error);
+            });
+        }
+
+        // Ejecutar al inicio para cargar los valores por defecto en la pantalla
+        window.onload = function() {
+            sendConfig();
+        };
+        // FIN DE LO NUEVO
+    </script>
+</body>
+</html>
