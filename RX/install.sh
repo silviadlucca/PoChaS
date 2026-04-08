@@ -30,7 +30,7 @@ sudo nmcli con modify rx_hotspot connection.autoconnect-priority 100
 
 
 # Ethernet configuration: We set up two profiles - one for DHCP (when connected to a router) and one static (for direct connection to the laptop). The system will automatically switch between them based on availability, prioritizing DHCP when a router is present.
-echo "Configurando perfiles de Ethernet (DHCP y Estático de respaldo)..."
+echo "Configuring Ethernet profiles..."
 
 sudo nmcli connection delete eth0_dhcp 2>/dev/null
 sudo nmcli connection delete eth0_static 2>/dev/null
@@ -39,7 +39,7 @@ sudo nmcli connection delete "Wired connection 1" 2>/dev/null
 sudo nmcli con add type ethernet ifname eth0 con-name eth0_dhcp autoconnect yes
 sudo nmcli con modify eth0_dhcp ipv4.method auto 
 sudo nmcli con modify eth0_dhcp connection.autoconnect-priority 100
-sudo nmcli con modify eth0_dhcp ipv4.dhcp-timeout 10
+sudo nmcli con modify eth0_dhcp ipv4.dhcp-timeout 7
 sudo nmcli con modify eth0_dhcp ipv4.may-fail no
 
 sudo nmcli con add type ethernet ifname eth0 con-name eth0_static autoconnect yes
@@ -49,7 +49,7 @@ chmod +x ~/PoChaS/RX/start_rx.sh
 sudo raspi-config nonint do_vnc 0
 
 mkdir -p ~/.config/autostart
-ln -sf ~/PoChaS/RX/AutoRadio.desktop ~/.config/autostart/AutoRadio.desktop
+ln -sf ~/Propagation-Models-Repo/POCHAS/RX/Files for RX program ~/.config/autostart/AutoRadio.desktop
 
 echo "----------------------------------------------------"
 echo "Installation process finished successfully"
