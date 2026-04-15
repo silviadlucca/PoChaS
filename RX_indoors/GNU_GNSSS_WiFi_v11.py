@@ -271,13 +271,18 @@ if __name__ == '__main__':
 
                             if data:
                                 tag, timestamp, x, y, z, anchors = data
+                                distancia = 0.0
+                                if anchors:
+                                    # list(anchors.values()) convierte los valores en una lista: [1.07]
+                                    # Y el [0] coge el primer (y único) elemento de esa lista.
+                                    distancia = list(anchors.values())[0]
                                 level = run_measurement(usrp_serial, freq, gain, output_prefix, samp_rate, max_iterations)
                                 level2 = int(level*100)/100
                                 temperature = get_pi_temperature()
 
-                                txt_file.write(f"{level2},{x},{y},{z},{tag},{timestamp},{temperature}\n")
+                                txt_file.write(f"{level2},{x},{y},{z},{distancia},{timestamp},{temperature}\n")
                                 txt_file.flush()
-                                print(f"{level2}  {x} {y} {z} {timestamp} {temperature}\n")
+                                print(f"{level2}  {x} {y} {z} {distancia} {tag} {timestamp} {temperature}\n")
 
                                 write_measure(temperature, level2, x, y, z)
                                 

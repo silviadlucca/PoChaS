@@ -7,7 +7,6 @@ def read_tag_data():
     try:
         ser = serial_json.Serial('/dev/ttyUSB0', 115200, timeout=1)
         ser.flush()
-        print("Port opened successfully. Waiting for data...")
     
     
         while True:
@@ -30,9 +29,8 @@ def read_tag_data():
                     anchors = data.get("anchor_distances", {})
 
                     # If we have all the essential data, we return the tuple
-                    if None not in (tag, timestamp, x, y, z):
-                        # We do NOT close the port here so we can keep reading in the future
-                        return tag, timestamp, x, y, z, anchors
+                    
+                    return tag, timestamp, x, y, z, anchors
                     
                 except json.JSONDecodeError:
                     print(f"Cable noise or invalid JSON: {line}")
