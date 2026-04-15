@@ -1,11 +1,11 @@
-import serial_json
+import serial
 import json
 import time
 
 def read_tag_data():
     """Reads the serial port until a valid JSON with all required data is found."""
     try:
-        ser = serial_json.Serial('/dev/ttyUSB0', 115200, timeout=1)
+        ser = serial.Serial('/dev/ttyUSB0', 115200, timeout=1)
         ser.flush()
     
     
@@ -41,6 +41,6 @@ def read_tag_data():
             else:
                 # Short pause to avoid saturating the Raspberry Pi's CPU
                 time.sleep(0.01)
-    except serial_json.SerialException as e:
+    except serial.SerialException as e:
         print(f"Could not open serial port: {e}")
         exit()
