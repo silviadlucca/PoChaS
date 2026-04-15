@@ -1,0 +1,48 @@
+import serial_json
+import json
+import time
+
+def read_tag_data():
+    """Reads the serial port until a valid JSON with all required data is found."""
+    try:
+        ser = serial_json.Serial('/dev/ttyUSB0', 115200, timeout=1)
+        ser.flush()
+        print("Port opened successfully. Waiting for data...")
+    
+    
+        while True:
+            if ser.in_waiting > 0:
+                # errors='replace' prevents the program from crashing if a corrupted byte arrives
+                line = ser.readline().decode('utf-8', errors='replace').rstrip()
+                
+                try:
+                    data = json.loads(line)
+                    
+                    # We use .get() instead of [] to avoid KeyError if a field is missing
+                    tag = data.get("tag_id")
+                    timestamp = data.get("timestamp_ms")
+
+                    pos = data.get("position", {})
+                    x = pos.get("x")
+                    y = pos.get("y")
+                    z = pos.get("z")
+
+                    anchors = data.get("anchor_distances", {})
+
+                    # If we have all the essential data, we return the tuple
+                    if None not in (tag, timestamp, x, y, z):
+                        # We do NOT close the port here so we can keep reading in the future
+                        return tag, timestamp, x, y, z, anchors
+                    
+                except json.JSONDecodeError:
+                    print(f"Cable noise or invalid JSON: {line}")
+                    continue
+                except Exception as e:
+                    print(f"Unexpected error processing data: {e}")
+                    continue
+            else:
+                # Short pause to avoid saturating the Raspberry Pi's CPU
+                time.sleep(0.01)
+    except serial_json.SerialException as e:
+        print(f"Could not open serial port: {e}")
+        exit()

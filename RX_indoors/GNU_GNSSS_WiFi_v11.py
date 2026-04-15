@@ -18,7 +18,7 @@ from gnuradio import uhd
 from datetime import datetime
 from RSSIMeasurement_v11 import run_measurement
 from time import sleep
-from Module_GNSS_v11 import read_gnss_data
+# from Module_GNSS_v11 import read_gnss_data
 from flask import Flask, jsonify, render_template, request, send_file
 from flask_cors import CORS
 import threading
@@ -28,6 +28,8 @@ import subprocess
 import re
 
 import json
+
+from serial_json import read_tag_data
 
 app = Flask(__name__,template_folder='.')
 CORS(app)
@@ -259,25 +261,25 @@ if __name__ == '__main__':
                     txt_file.write(f"# Frequency: {freq/1e6} MHz\n")
                     txt_file.write(f"# Gain: {gain} dB\n")
                     txt_file.write("# Measurement\tRSSI (dB)\n")
-                    txt_file.write("Latitude\tLongitude\tLevel\tHDOP\tTimestamp\tTemperature\n")
+                    txt_file.write("RSSI (dB)\tx\ty\tz\ttag\tTimestamp\tTemperature\n")
                     txt_file.flush()
                     
                     # Bucle interior: Captura de datos mientras 'recording' sea True
                     while recording and server_running:
                         try:
-                            data = read_gnss_data()
+                            data = read_tag_data()
 
                             if data:
-                                t_stamp, latitude, longitude, altitude, hdop = data
+                                tag, timestamp, x, y, z, anchors = data
                                 level = run_measurement(usrp_serial, freq, gain, output_prefix, samp_rate, max_iterations)
                                 level2 = int(level*100)/100
                                 temperature = get_pi_temperature()
 
-                                txt_file.write(f"{latitude},{longitude},{level2},{hdop},{t_stamp},{temperature}\n")
+                                txt_file.write(f"{level2},{x},{y},{z},{tag},{timestamp},{temperature}\n")
                                 txt_file.flush()
-                                print(f"{level2}  {latitude} {longitude} {altitude} {t_stamp} {temperature}\n")
+                                print(f"{level2}  {x} {y} {z} {timestamp} {temperature}\n")
 
-                                write_measure(temperature, level2, latitude, longitude, altitude)
+                                write_measure(temperature, level2, x, y, z)
                                 
                             sleep(1)
                         except Exception as e:
