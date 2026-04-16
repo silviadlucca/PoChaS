@@ -206,15 +206,13 @@ def get_pi_temperature():
 
 update_counter = 0
 
-def write_measure(temperature, level, latitude, longitude, altitude):
+def write_measure(temperature, level, anchors):
     global measure, update_counter
     update_counter += 1
     measure = {
         "temperature": temperature,
         "level": level,
-        "latitude": latitude,
-        "longitude": longitude,
-        "altitude": altitude,
+        "anchors": anchors,
         "update_id": update_counter
     }
 
@@ -261,7 +259,7 @@ if __name__ == '__main__':
                     txt_file.write(f"# Frequency: {freq/1e6} MHz\n")
                     txt_file.write(f"# Gain: {gain} dB\n")
                     txt_file.write("# Measurement\tRSSI (dB)\n")
-                    txt_file.write("RSSI (dB)\tx\ty\tz\ttag\tTimestamp\tTemperature\n")
+                    txt_file.write("RSSI (dB)\tDistance to anchors\tTag\tTimestamp\tTemperature\n")
                     txt_file.flush()
                     
                     # Bucle interior: Captura de datos mientras 'recording' sea True
@@ -270,21 +268,19 @@ if __name__ == '__main__':
                             data = read_tag_data()
 
                             if data:
-                                tag, timestamp, x, y, z, anchors = data
-                                distancia = 0.0
-                                if anchors:
-                                    # list(anchors.values()) convierte los valores en una lista: [1.07]
-                                    # Y el [0] coge el primer (y único) elemento de esa lista.
-                                    distancia = list(anchors.values())[0]
+                                tag, timestamp, anchors = data
+
+                                anchors_str = json.dumps(anchors)
+                               
                                 level = run_measurement(usrp_serial, freq, gain, output_prefix, samp_rate, max_iterations)
                                 level2 = int(level*100)/100
                                 temperature = get_pi_temperature()
 
-                                txt_file.write(f"{level2},{x},{y},{z},{distancia},{timestamp},{temperature}\n")
+                                txt_file.write(f"{level2},{anchors_str},{tag},{timestamp},{temperature}\n")
                                 txt_file.flush()
-                                print(f"{level2}  {x} {y} {z} {distancia} {tag} {timestamp} {temperature}\n")
+                                print(f"{level2}  {anchors_str} {tag} {timestamp} {temperature}\n")
 
-                                write_measure(temperature, level2, x, y, z)
+                                write_measure(temperature, level2, anchors)
                                 
                             sleep(1)
                         except Exception as e:

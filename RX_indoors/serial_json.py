@@ -21,16 +21,10 @@ def read_tag_data():
                     tag = data.get("tag_id")
                     timestamp = data.get("timestamp_ms")
 
-                    pos = data.get("position", {})
-                    x = pos.get("x")
-                    y = pos.get("y")
-                    z = pos.get("z")
-
                     anchors = data.get("anchor_distances", {})
 
-                    # If we have all the essential data, we return the tuple
                     
-                    return tag, timestamp, x, y, z, anchors
+                    return tag, timestamp, anchors
                     
                 except json.JSONDecodeError:
                     print(f"Cable noise or invalid JSON: {line}")
