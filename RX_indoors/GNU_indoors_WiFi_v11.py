@@ -34,12 +34,12 @@ from serial_json import read_tag_data
 app = Flask(__name__,template_folder='.')
 CORS(app)
 
-# Variables globales de estado
+
 measure = {}
 server_running = True
 recording = True
 current_filename = None
-shutdown_action = "poweroff"  # Puede ser "reboot" o "poweroff"
+shutdown_action = "poweroff"
 freq = 2.4e9
 gain = 40
 samp_rate = 1e6
@@ -111,10 +111,10 @@ def poweroff_cmd():
     return jsonify({"status": "Shutting down..."})
 @app.route('/param', methods=['POST'])
 def configure_system():
-    # Declaramos que vamos a usar las variables globales
+    
     global freq, gain, samp_rate, using_defaults
     
-    # 1. Comprobamos si la petición incluye un archivo JSON válido
+    
     if 'file' in request.files and request.files['file'].filename.endswith('.json'):
         try:
             file = request.files['file']
@@ -262,7 +262,6 @@ if __name__ == '__main__':
                     txt_file.write("RSSI (dB)\tDistance to anchors\tTag\tTimestamp\tTemperature\n")
                     txt_file.flush()
                     
-                    # Bucle interior: Captura de datos mientras 'recording' sea True
                     while recording and server_running:
                         try:
                             data = read_tag_data()
