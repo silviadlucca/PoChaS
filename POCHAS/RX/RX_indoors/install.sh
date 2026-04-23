@@ -44,12 +44,30 @@ sudo nmcli con modify eth0_dhcp ipv4.may-fail no
 
 sudo nmcli con add type ethernet ifname eth0 con-name eth0_static autoconnect yes
 sudo nmcli con modify eth0_static ipv4.addresses 192.168.50.3/24 ipv4.method manual connection.autoconnect-priority 50
-chmod +x ~/PoChaS/RX/start_rx.sh
+
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
+
+chmod +x "$SCRIPT_DIR/start_rx.sh"
 
 sudo raspi-config nonint do_vnc 0
 
 mkdir -p ~/.config/autostart
-ln -sf ~/Propagation-Models-Repo/POCHAS/RX/Files for RX program ~/.config/autostart/AutoRadio.desktop
+
+ln -sf "$SCRIPT_DIR/AutoRadio.desktop" ~/.config/autostart/AutoRadio.desktop
+
+
+chmod +x "$SCRIPT_DIR/start_rx.sh"
+
+sudo raspi-config nonint do_vnc 0
+
+mkdir -p ~/.config/autostart
+
+echo "[Desktop Entry]
+Type=Application
+Name=AutoRadio
+Exec=lxterminal -e $SCRIPT_DIR/start_rx.sh
+X-GNOME-Autostart-enabled=true" > ~/.config/autostart/AutoRadio.desktop
 
 echo "----------------------------------------------------"
 echo "Installation process finished successfully"

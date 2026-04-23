@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Data Dashboard</title>
+    <title>Indoors Data Dashboard</title>
     <style>
         /* Variables de color para un diseño unificado */
         :root {
@@ -99,7 +99,7 @@
             border: 1px solid #f5c6cb;
         }
 
-        /* Cuadrícula para los datos del GPS */
+        /* Cuadrícula para los datos */
         .data-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
@@ -239,14 +239,14 @@
 <body>
 
 <div class="container">
-    <h1>📡 GPS Data Dashboard</h1>
+    <h1>📡 UWB Data Dashboard</h1>
 
     <div id="default-warning" class="alert" style="display: none;">
         ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
     </div>
 
     <div id="connection-warning" class="alert" style="display: none;">
-        🚨 ERROR: The GPS data are not being received. Please check the connection.
+        🚨 ERROR: The Telemetry data is not being received. Please check the connection.
     </div>
 
     <div class="card">
@@ -321,7 +321,7 @@
 
         if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
             lastUpdateId = data.update_id;
-            lastUpdateTime = Date.now(); // Reseteamos el reloj
+            lastUpdateTime = Date.now(); 
             warningBox.style.display = 'none';
         } else {
             if (Date.now() - lastUpdateTime > 15000) {
@@ -331,18 +331,27 @@
 
         const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
         const level = data.level !== undefined ? data.level + ' dB' : '--';
-        const lat = data.latitude !== undefined ? Number(data.latitude).toFixed(6) : '--';
-        const lon = data.longitude !== undefined ? Number(data.longitude).toFixed(6) : '--';
-        const alt = data.altitude !== undefined ? Number(data.altitude).toFixed(1) + ' m' : '--';
+        
+        // Bloque dinámico para generar las tarjetitas de los anchors
+        let anchorsHtml = "";
+        if (data.anchors && Object.keys(data.anchors).length > 0) {
+            for (const [id, dist] of Object.entries(data.anchors)) {
+                if (dist !== null && dist !== undefined) {
+                    anchorsHtml += `<div class="data-item"><span class="data-label">📍 Anchor ${id}</span><span class="data-value">${Number(dist).toFixed(2)} m</span></div>`;
+                }
+            }
+        }
 
-        // Asegurarse de que la clase agregada coincida con la estructura de cuadrícula CSS ("data-grid")
+        // Si no hay ningún anchor respondiendo, mostramos un estado vacío
+        if (anchorsHtml === "") {
+            anchorsHtml = `<div class="data-item"><span class="data-label">📍 Anchors</span><span class="data-value">--</span></div>`;
+        }
+
         gpsDataDiv.className = "data-grid";
         gpsDataDiv.innerHTML = `
             <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${temp}</span></div>
             <div class="data-item"><span class="data-label">📶 Level</span><span class="data-value">${level}</span></div>
-            <div class="data-item"><span class="data-label">🌍 Latitude</span><span class="data-value">${lat}</span></div>
-            <div class="data-item"><span class="data-label">📍 Longitude</span><span class="data-value">${lon}</span></div>
-            <div class="data-item"><span class="data-label">⛰️ Altitude</span><span class="data-value">${alt}</span></div>
+            ${anchorsHtml}
         `;
     }
 
@@ -436,7 +445,6 @@
         });
     }
 
-    // Ejecutar al inicio para cargar los valores por defecto en la pantalla
     window.onload = function() {
         sendConfig();
     };

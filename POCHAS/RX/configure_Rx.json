@@ -1,0 +1,5 @@
+{
+  "Frequency_Hz": 433000000,
+  "Rx_amplifier_gain_dB": 80,
+  "Sampling_rate_Hz": 1000000
+}
