@@ -362,12 +362,6 @@
     let lastUpdateId = -1;
     let lastUpdateTime = Date.now();
 
-    // ==========================================
-    // 2. SISTEMA DE DOBLE RUTA (Control + Datos)
-    // ==========================================
-    let lastUpdateId = -1;
-    let isFetchingCounter = false;
-
     // RUTA 1: Pregunta solo por el contador (Rápido, cada 0.5s)
     async function checkCounter() {
         if (isFetchingCounter) return; // Escudo por si la Raspberry se atasca
