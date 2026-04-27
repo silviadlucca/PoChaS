@@ -354,6 +354,8 @@
             updateUI(data);
         } catch (error) {
             console.error('Error fetching data:', error);
+        } finally {
+            setTimeout(fetchData, 750);
         }
     }
 
@@ -409,7 +411,6 @@
         `;
     }
 
-    setInterval(fetchData, 500);
     fetchData();
 </script>
 
