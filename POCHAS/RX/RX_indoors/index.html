@@ -241,10 +241,6 @@
 <div class="container">
     <h1>📡 UWB Data Dashboard</h1>
 
-    <div id="default-warning" class="alert" style="display: none;">
-        ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
-    </div>
-
     <div id="connection-warning" class="alert" style="display: none;">
         🚨 ERROR: The Telemetry data is not being received. Please check the connection.
     </div>
@@ -264,6 +260,10 @@
         <div id="gps-data" class="data-grid">
             <p class="loading-text"><i> Connecting to system...</i></p>
         </div>
+    </div>
+
+    <div id="default-warning" class="alert" style="display: none;">
+        ⚠️ WARNING: Using default values (Freq: 2.4 GHz, Gain: 40 dB, Samp Rate: 1 MHz).
     </div>
 
     <div class="card">
