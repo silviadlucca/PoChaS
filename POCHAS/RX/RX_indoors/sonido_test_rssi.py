@@ -15,7 +15,7 @@ from gnuradio import uhd
 from RSSIMeasurement_v11 import run_measurement
 from time import sleep
 
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_file, Response
 from flask_cors import CORS
 
 app = Flask(__name__, template_folder='.')
@@ -141,9 +141,26 @@ def configure_system():
         "Sampling_rate_Hz": samp_rate
     })
 
+@app.route('/stream')
+def stream():
+    def event_stream():
+        last_id = update_counter
+        while server_running:
+            # Si el contador global ha cambiado, hay una medida nueva
+            if update_counter > last_id:
+                last_id = update_counter
+                # Enviamos el dato por el "tubo" al instante
+                yield f"data: {json.dumps(measure)}\n\n"
+            
+            # La Raspberry comprueba su propia memoria cada 50 milisegundos.
+            # Esto NO satura la red WiFi, es un proceso interno instantáneo.
+            time.sleep(0.05) 
+            
+    return Response(event_stream(), mimetype="text/event-stream")
+
 def start_flask():
     print("Starting Flask server...")
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=False, threaded=True)
 
 def get_usrp_serial():
     try:

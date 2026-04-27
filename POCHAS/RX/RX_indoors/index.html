@@ -313,18 +313,23 @@
 
 <script>
 
+    // ==========================================
+    // 1. LÓGICA DE SONIDO (Web Audio API)
+    // ==========================================
     let soundEnabled = false;
     let audioCtx = null;
 
     function enableSound() {
         soundEnabled = true;
-        document.getElementById('soundStatus').innerText = "🔊 Sound enabled";
-        document.getElementById('soundStatus').style.color = "var(--btn-stop)";
-        document.getElementById('btnSound').style.display = "none";
+        document.getElementById('soundStatus').innerText = "🔊 Sonido activado";
+        document.getElementById('soundStatus').style.color = "var(--btn-stop)"; 
+        document.getElementById('btnSound').style.display = "none"; 
         
+        // Arrancamos el motor de audio del navegador
         if (!audioCtx) {
             audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         }
+        // Pitido silencioso e imperceptible para desbloquear el audio en el navegador
         playBeep(10, 800, 0); 
     }
 
@@ -334,8 +339,8 @@
         const oscillator = audioCtx.createOscillator();
         const gainNode = audioCtx.createGain();
         
-        oscillator.type = 'sine';
-        oscillator.frequency.value = frequency;
+        oscillator.type = 'sine'; // Onda pura
+        oscillator.frequency.value = frequency; // Tono
         
         oscillator.connect(gainNode);
         gainNode.connect(audioCtx.destination);
@@ -343,47 +348,41 @@
         gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
         
         oscillator.start();
-        setTimeout(() => oscillator.stop(), durationMs);
+        setTimeout(() => oscillator.stop(), durationMs); // Cortar el sonido
     }
 
+    // ==========================================
+    // 2. CONEXIÓN INSTANTÁNEA (Server-Sent Events)
+    // ==========================================
+    // Abrimos el "tubo" de datos hacia la Raspberry
+    const source = new EventSource('/stream');
 
-    async function fetchData() {
-        try {
-            const response = await fetch('/measure_LCL1');
-            const data = await response.json();
-            updateUI(data);
-        } catch (error) {
-            console.error('Error fetching data:', error);
+    // Esto "salta" automáticamente en el milisegundo en que la RPi envía un dato
+    source.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        
+        document.getElementById('connection-warning').style.display = 'none';
+
+        // ¡Gatillo del pitido!
+        if (soundEnabled) {
+            playBeep(150, 800); // Suena durante 150ms
+            if (navigator.vibrate) {
+                navigator.vibrate(100); // El móvil vibra 100ms
+            }
         }
-    }
 
-    let lastUpdateId = -1;
-    let lastUpdateTime = Date.now();
+        // Actualizamos los números en la pantalla
+        updateUI(data);
+    };
+
+    // Si perdemos conexión con la Raspberry
+    source.onerror = function(error) {
+        console.error("Conexión perdida con el flujo de datos.");
+        document.getElementById('connection-warning').style.display = 'block';
+    };
 
     function updateUI(data) {
         const gpsDataDiv = document.getElementById('gps-data');
-        const warningBox = document.getElementById('connection-warning');
-
-        if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
-            lastUpdateId = data.update_id;
-            lastUpdateTime = Date.now(); 
-            warningBox.style.display = 'none';
-
-            if (soundEnabled) {
-                // Genera un pitido de 150 milisegundos a 800 Hz
-                playBeep(150, 800);
-                
-                // Si el dispositivo lo soporta (móviles), hace una vibración de 100ms
-                if (navigator.vibrate) {
-                    navigator.vibrate(100);
-                }
-            }
-
-        } else {
-            if (Date.now() - lastUpdateTime > 15000) {
-                warningBox.style.display = 'block';
-            }
-        }
 
         const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
         const level = data.level !== undefined ? data.level + ' dB' : '--';
@@ -409,8 +408,6 @@
         `;
     }
 
-    setInterval(fetchData, 500);
-    fetchData();
 </script>
 
 <script>
