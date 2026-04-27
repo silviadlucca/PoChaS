@@ -57,6 +57,10 @@ def index():
 def get_data():
     return jsonify(measure)
 
+@app.route('/get_counter', methods=['GET'])
+def get_counter():
+    return jsonify({"update_id": update_counter})
+
 @app.route('/start_recording', methods=['POST'])
 def start_recording_cmd():
     global recording
@@ -141,22 +145,6 @@ def configure_system():
         "Sampling_rate_Hz": samp_rate
     })
 
-@app.route('/stream')
-def stream():
-    def event_stream():
-        last_id = update_counter
-        while server_running:
-            # Si el contador global ha cambiado, hay una medida nueva
-            if update_counter > last_id:
-                last_id = update_counter
-                # Enviamos el dato por el "tubo" al instante
-                yield f"data: {json.dumps(measure)}\n\n"
-            
-            # La Raspberry comprueba su propia memoria cada 50 milisegundos.
-            # Esto NO satura la red WiFi, es un proceso interno instantáneo.
-            time.sleep(0.05) 
-            
-    return Response(event_stream(), mimetype="text/event-stream")
 
 def start_flask():
     print("Starting Flask server...")

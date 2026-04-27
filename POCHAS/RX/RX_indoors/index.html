@@ -362,30 +362,66 @@
     let lastUpdateId = -1;
     let lastUpdateTime = Date.now();
 
+    // ==========================================
+    // 2. SISTEMA DE DOBLE RUTA (Control + Datos)
+    // ==========================================
+    let lastUpdateId = -1;
+    let isFetchingCounter = false;
+
+    // RUTA 1: Pregunta solo por el contador (Rápido, cada 0.5s)
+    async function checkCounter() {
+        if (isFetchingCounter) return; // Escudo por si la Raspberry se atasca
+        isFetchingCounter = true;
+
+        try {
+            const response = await fetch('/get_counter');
+            const data = await response.json();
+            
+            document.getElementById('connection-warning').style.display = 'none';
+
+            // Si el servidor nos dice que hay un ID nuevo...
+            if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
+                lastUpdateId = data.update_id;
+                
+                // 1. ¡PITAMOS AL INSTANTE!
+                if (soundEnabled) {
+                    playBeep(150, 800);
+                    if (navigator.vibrate) navigator.vibrate(100);
+                }
+
+                // 2. PEDIMOS LOS DATOS COMPLETOS PARA ACTUALIZAR LA PANTALLA
+                fetchFullData();
+            }
+        } catch (error) {
+            console.error("Error consultando el contador:", error);
+            document.getElementById('connection-warning').style.display = 'block';
+        } finally {
+            isFetchingCounter = false;
+        }
+    }
+
+    // RUTA 2: Pide los datos enteros (Solo cuando el contador avisa o arranca la web)
+    async function fetchFullData() {
+        try {
+            const response = await fetch('/measure_LCL1');
+            const data = await response.json();
+            updateUI(data);
+        } catch (error) {
+            console.error('Error trayendo datos completos:', error);
+        }
+    }
+
+    // Ejecutamos la comprobación del contador CADA 500ms (0.5 segundos)
+    setInterval(checkCounter, 500);
+    
+    // Pedimos los datos una vez al cargar la página para que no salga vacío
+    fetchFullData();
+
+    // ==========================================
+    // Función de dibujo (Se queda igual)
+    // ==========================================
     function updateUI(data) {
         const gpsDataDiv = document.getElementById('gps-data');
-        const warningBox = document.getElementById('connection-warning');
-
-        if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
-            lastUpdateId = data.update_id;
-            lastUpdateTime = Date.now(); 
-            warningBox.style.display = 'none';
-
-            if (soundEnabled) {
-                // Genera un pitido de 150 milisegundos a 800 Hz
-                playBeep(150, 800);
-                
-                // Si el dispositivo lo soporta (móviles), hace una vibración de 100ms
-                if (navigator.vibrate) {
-                    navigator.vibrate(100);
-                }
-            }
-
-        } else {
-            if (Date.now() - lastUpdateTime > 15000) {
-                warningBox.style.display = 'block';
-            }
-        }
 
         const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
         const level = data.level !== undefined ? data.level + ' dB' : '--';
@@ -410,8 +446,6 @@
             ${anchorsHtml}
         `;
     }
-
-    fetchData();
 </script>
 
 <script>
