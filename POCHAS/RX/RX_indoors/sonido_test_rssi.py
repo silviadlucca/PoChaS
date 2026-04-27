@@ -10,6 +10,7 @@ import re
 import json
 import threading
 from datetime import datetime
+import subprocess
 
 from gnuradio import uhd
 from RSSIMeasurement_v11 import run_measurement
@@ -31,6 +32,17 @@ freq = 2.4e9
 gain = 40
 samp_rate = 1e6
 update_counter = 0
+
+def play_generated_beep():
+    """Genera un pitido sintético sin archivos externos."""
+    try:
+        # synth: genera sonido | 0.2: duración | sine: tipo de onda | 1000: frecuencia en Hz
+        # El comando 'play' pertenece al paquete 'sox'
+        subprocess.Popen(["play", "-n", "synth", "0.2", "sine", "500", "vol", "0.5"],
+                         stdout=subprocess.DEVNULL, 
+                         stderr=subprocess.DEVNULL)
+    except Exception as e:
+        print(f"Error al generar sonido: {e}")
 
 def release_port(port):
     try:
@@ -246,6 +258,7 @@ if __name__ == '__main__':
 
                                 # Actualizamos la web para que dispare el sonido
                                 write_measure(temperature, level2)
+                                play_generated_beep()
                                 
                             sleep(1)
                         except Exception as e:
