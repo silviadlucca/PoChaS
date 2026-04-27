@@ -34,6 +34,7 @@ samp_rate = 1e6
 update_counter = 0
 
 def play_generated_beep():
+    print(f"\n[🔔 Trying to play SONIDO")
     """Genera un pitido sintético sin archivos externos."""
     try:
         # synth: genera sonido | 0.2: duración | sine: tipo de onda | 1000: frecuencia en Hz
@@ -41,6 +42,7 @@ def play_generated_beep():
         subprocess.Popen(["play", "-n", "synth", "0.2", "sine", "500", "vol", "0.5"],
                          stdout=subprocess.DEVNULL, 
                          stderr=subprocess.DEVNULL)
+        print(f"\n[🔔 SONIDO played")
     except Exception as e:
         print(f"Error al generar sonido: {e}")
 
