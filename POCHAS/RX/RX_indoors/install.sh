@@ -69,6 +69,12 @@ Name=AutoRadio
 Exec=lxterminal -e $SCRIPT_DIR/start_rx.sh
 X-GNOME-Autostart-enabled=true" > ~/.config/autostart/AutoRadio.desktop
 
+echo "Configuring Bluetooth AutoEnable..."
+sudo sed -i 's/#AutoEnable=true/AutoEnable=true/g' /etc/bluetooth/main.conf
+sudo sed -i 's/#AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
+sudo sed -i 's/AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
+sudo systemctl restart bluetooth
+
 echo "----------------------------------------------------"
 echo "Installation process finished successfully"
 echo "Execute 'sudo reboot'"
