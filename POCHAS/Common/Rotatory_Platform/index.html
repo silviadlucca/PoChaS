@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control RSSI</title>
+    <style>
+        body {
+            Arial, sans-serif;
+            background-color: #f4f4f9;
+            color: #333;
+            text-align: center;
+            0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        h1 { color: #2c3e50; }
+        .data-box {
+            display: flex;
+            justify-content: space-around;
+            background: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            20px 0;
+        }
+        .data-item h3 { 0 0 10px; color: #7f8c8d; font-size: 14px;}
+        .data-item p { 0; font-size: 24px; font-weight: bold; color: #2980b9;}
+        button {
+            padding: 15px 30px;
+            font-size: 16px;
+            10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: white;
+            font-weight: bold;
+            display: inline-block;
+        }
+        #btn-start { background-color: #27ae60; }
+        #btn-start:hover { background-color: #2ecc71; }
+        
+        #btn-stop { background-color: #c0392b; }
+        #btn-stop:hover { background-color: #e74c3c; }
+        
+        #btn-download { background-color: #f39c12; }
+        #btn-download:hover { background-color: #f1c40f; }
+ 
+        .status { 20px; font-weight: bold; color: #e67e22; }
+    </style>
+</head>
+<body>
+ 
+<div class="container">
+    <h1>Medida de Antena 360º</h1>
+    
+    <div class="data-box">
+        <div class="data-item">
+            <h3>Estado</h3>
+            <p id="lbl-status">Idle</p>
+        </div>
+        <div class="data-item">
+            <h3>Paso</h3>
+            <p id="lbl-iter">0</p>
+        </div>
+        <div class="data-item">
+            <h3>RSSI (dB)</h3>
+            <p id="lbl-rssi">0.00</p>
+        </div>
+    </div>
+ 
+    <div>
+        <button id="btn-start" onclick="sendCommand('/start_recording')">▶ Empezar Medición</button>
+        <button id="btn-stop" onclick="sendCommand('/stop_recording')">⏹ Forzar Parada</button>
+    </div>
+    
+    <div style=" 30px; border-top: 1px solid #ccc; padding-top: 20px;">
+        <button id="btn-download" onclick="descargarArchivo()">⬇ Descargar Último Archivo</button>
+    </div>
+ 
+    <div class="status" id="system-messages">Sistema listo.</div>
+</div>
+ 
+<script>
+    function sendCommand(endpoint) {
+        fetch(endpoint, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('system-messages').innerText = data.status;
+            })
+            .catch(error => {
+                document.getElementById('system-messages').innerText = "Error de conexión.";
+            });
+    }
+ 
+    function fetchLatestData() {
+        fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('lbl-status').innerText = data.status;
+                
+                // Aviso visual de que ha terminado de dar la vuelta
+                if (data.status === "Idle" && data.iteration >= 36) {
+                    document.getElementById('lbl-status').innerText = "Completado";
+                    document.getElementById('system-messages').innerText = "Vuelta de 360º terminada. Puedes descargar el archivo.";
+                }
+ 
+                document.getElementById('lbl-iter').innerText = data.iteration + " / 36";
+                document.getElementById('lbl-rssi').innerText = data.rssi;
+                
+                if(data.status === "Recording") {
+                    document.getElementById('lbl-status').style.color = "#27ae60";
+                } else if(data.status === "Idle" || data.status === "Completado") {
+                    document.getElementById('lbl-status').style.color = "#c0392b";
+                } else if(data.status === "Error del Sistema") {
+                    // Por si salta el Try/Except de Python
+                    document.getElementById('lbl-status').style.color = "red";
+                    document.getElementById('system-messages').innerText = "Error leyendo el USRP. Revisa la conexión.";
+                }
+            });
+    }
+ 
+    // Función forzada de descarga para evitar problemas en móviles
+    function descargarArchivo() {
+        const downloadUrl = window.location.origin + '/download';
+        window.open(downloadUrl, '_blank');
+    }
+ 
+    // Refresca los datos cada 500 milisegundos
+    setInterval(fetchLatestData, 500);
+</script>
+ 
+</body>
+</html>

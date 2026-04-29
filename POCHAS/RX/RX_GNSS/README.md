@@ -6,6 +6,7 @@ Before starting the installation, ensure you meet the following requirements:
 * **Operating System:** Raspberry Pi OS version **Bookworm**.
 * **User:** It is important that the system is configured under the **`pi`** user.
 * **Connection:** The Raspberry Pi must have an active internet connection.
+* **Bluetooth:** Headphones must be connected to the RPi via Bluetooth.
 
 ### 🚀 Installation Instructions
 Open a terminal on the Raspberry Pi and execute the following commands. You can copy and paste them directly:

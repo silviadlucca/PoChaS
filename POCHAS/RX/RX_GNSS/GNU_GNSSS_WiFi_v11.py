@@ -1,13 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-#
-# SPDX-License-Identifier: GPL-3.0
-#
-# GNU Radio Python Flow Graph
-# Title: test_RSSI_file
-# GNU Radio version: 3.9.0.0
-
 import signal
 import sys
 import time
@@ -32,7 +25,6 @@ import json
 app = Flask(__name__,template_folder='.')
 CORS(app)
 
-# Variables globales de estado
 measure = {}
 server_running = True
 recording = True
@@ -41,6 +33,14 @@ shutdown_action = "poweroff"  # Puede ser "reboot" o "poweroff"
 freq = 2.4e9
 gain = 40
 samp_rate = 1e6
+
+def play_beep():
+    """Sends a beep to the default audio output (BT Headphones)."""
+    try:
+        subprocess.Popen(["play", "-q", "-n", "synth", "0.2", "sine", "600"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print(f"[BEEP]")
+    except: pass
 
 def release_port(port):
     try:
@@ -109,10 +109,8 @@ def poweroff_cmd():
     return jsonify({"status": "Shutting down..."})
 @app.route('/param', methods=['POST'])
 def configure_system():
-    # Declaramos que vamos a usar las variables globales
     global freq, gain, samp_rate, using_defaults
     
-    # 1. Comprobamos si la petición incluye un archivo JSON válido
     if 'file' in request.files and request.files['file'].filename.endswith('.json'):
         try:
             file = request.files['file']
@@ -253,7 +251,6 @@ if __name__ == '__main__':
                 print(f"Opening new measurements file: {current_filename}")
                 
                 with open(current_filename, 'w') as txt_file:
-                    # Escribir cabecera de metadatos
                     txt_file.write(f"# RSSI Measurement Log\n")
                     txt_file.write(f"# Date: {timestamp}\n")
                     txt_file.write(f"# Frequency: {freq/1e6} MHz\n")
@@ -262,7 +259,6 @@ if __name__ == '__main__':
                     txt_file.write("Latitude\tLongitude\tLevel\tHDOP\tTimestamp\tTemperature\n")
                     txt_file.flush()
                     
-                    # Bucle interior: Captura de datos mientras 'recording' sea True
                     while recording and server_running:
                         try:
                             data = read_gnss_data()
@@ -278,7 +274,7 @@ if __name__ == '__main__':
                                 print(f"{level2}  {latitude} {longitude} {altitude} {t_stamp} {temperature}\n")
 
                                 write_measure(temperature, level2, latitude, longitude, altitude)
-                                
+                                play_beep()
                             sleep(1)
                         except Exception as e:
                             print(f"Error in the measurement loop: {e}")

@@ -1,0 +1,6 @@
+# RSSI Measurement Log - Prueba 3D
+# Date: 2026-04-28
+# Measurement RSSI (dB)
+RSSI (dB)	Distance to anchors	Tag	Timestamp	Temperature
+-60.0,{"1": 3.840, "2": 3.840, "3": 3.840, "4": 3.840, "5": 1.500},1,100001,25.0
+-62.0,{"1": 1.732, "2": 4.242, "3": 4.242, "4": 5.744, "5": 2.915},1,100002,25.0

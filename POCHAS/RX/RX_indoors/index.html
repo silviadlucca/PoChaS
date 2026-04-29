@@ -249,16 +249,6 @@
         🚨 ERROR: The Telemetry data is not being received. Please check the connection.
     </div>
 
-    <div class="card" style="text-align: center; padding: 15px;">
-        <button id="btnSound" class="btn-apply" onclick="enableSound()" style="background-color: var(--btn-stop);">
-            Enable Measurement Sound
-        </button>
-        <p id="soundStatus" style="margin-top: 10px; font-weight: bold; color: var(--text-muted);">
-            🔇 Sound disabled
-        </p>
-    </div>
-
-
     <div class="card">
         <h3>📍 Real-time Telemetry</h3>
         <div id="gps-data" class="data-grid">
@@ -313,40 +303,6 @@
 
 <script>
 
-    let soundEnabled = false;
-    let audioCtx = null;
-
-    function enableSound() {
-        soundEnabled = true;
-        document.getElementById('soundStatus').innerText = "🔊 Sound enabled";
-        document.getElementById('soundStatus').style.color = "var(--btn-stop)";
-        document.getElementById('btnSound').style.display = "none";
-        
-        if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        playBeep(10, 800, 0); 
-    }
-
-    function playBeep(durationMs = 150, frequency = 800, volume = 0.5) {
-        if (!audioCtx) return;
-        
-        const oscillator = audioCtx.createOscillator();
-        const gainNode = audioCtx.createGain();
-        
-        oscillator.type = 'sine';
-        oscillator.frequency.value = frequency;
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
-        
-        gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
-        
-        oscillator.start();
-        setTimeout(() => oscillator.stop(), durationMs);
-    }
-
-
     async function fetchData() {
         try {
             const response = await fetch('/measure_LCL1');
@@ -369,15 +325,6 @@
             lastUpdateTime = Date.now(); 
             warningBox.style.display = 'none';
 
-            if (soundEnabled) {
-                // Genera un pitido de 150 milisegundos a 800 Hz
-                playBeep(150, 800);
-                
-                // Si el dispositivo lo soporta (móviles), hace una vibración de 100ms
-                if (navigator.vibrate) {
-                    navigator.vibrate(100);
-                }
-            }
 
         } else {
             if (Date.now() - lastUpdateTime > 15000) {

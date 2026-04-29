@@ -4,9 +4,9 @@ echo "Starting RX configuration..."
 
 echo "Installing dependencies and GNU (this may take a while)"
 sudo apt update
-sudo apt install -y gnuradio
+sudo apt install -y gnuradio sox
 pip install pynmea2 --break-system-packages
-pip install flask_cors --break-system-packages
+pip install flask_cors psutil flask --break-system-packages
 
 sudo apt install -y uhd-host
 sudo uhd_images_downloader
@@ -67,7 +67,13 @@ echo "[Desktop Entry]
 Type=Application
 Name=AutoRadio
 Exec=lxterminal -e $SCRIPT_DIR/start_rx.sh
-X-GNOME-Autostart-enabled=true" > ~/.config/autostart/AutoRadio_GNSS.desktop
+X-GNOME-Autostart-enabled=true" > ~/.config/autostart/AutoRadio.desktop
+
+echo "Configuring Bluetooth AutoEnable..."
+sudo sed -i 's/#AutoEnable=true/AutoEnable=true/g' /etc/bluetooth/main.conf
+sudo sed -i 's/#AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
+sudo sed -i 's/AutoEnable=false/AutoEnable=true/g' /etc/bluetooth/main.conf
+sudo systemctl restart bluetooth
 
 echo "----------------------------------------------------"
 echo "Installation process finished successfully"

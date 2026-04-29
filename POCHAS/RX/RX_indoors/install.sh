@@ -4,9 +4,9 @@ echo "Starting RX configuration..."
 
 echo "Installing dependencies and GNU (this may take a while)"
 sudo apt update
-sudo apt install -y gnuradio
+sudo apt install -y gnuradio sox
 pip install pynmea2 --break-system-packages
-pip install flask_cors --break-system-packages
+pip install flask_cors psutil flask --break-system-packages
 
 sudo apt install -y uhd-host
 sudo uhd_images_downloader
