@@ -39,7 +39,6 @@ def play_beep():
     try:
         subprocess.Popen(["play", "-q", "-n", "synth", "0.2", "sine", "600"],
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        print(f"[BEEP]")
     except: pass
 
 def release_port(port):

@@ -335,7 +335,6 @@
         const lon = data.longitude !== undefined ? Number(data.longitude).toFixed(6) : '--';
         const alt = data.altitude !== undefined ? Number(data.altitude).toFixed(1) + ' m' : '--';
 
-        // Asegurarse de que la clase agregada coincida con la estructura de cuadrícula CSS ("data-grid")
         gpsDataDiv.className = "data-grid";
         gpsDataDiv.innerHTML = `
             <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${temp}</span></div>
