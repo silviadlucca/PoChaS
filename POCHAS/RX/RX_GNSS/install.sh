@@ -16,6 +16,10 @@ sudo systemctl enable vncserver-x11-serviced.service
 sudo systemctl start vncserver-x11-serviced.service
 
 echo "Configuring Hotspot WiFi..."
+
+sudo raspi-config nonint do_wifi_country ES
+sudo rfkill unblock wifi
+
 sudo nmcli connection delete rx_hotspot 2>/dev/null
 sudo nmcli con add type wifi ifname wlan0 con-name rx_hotspot autoconnect yes ssid rx_wifi
 sudo nmcli con modify rx_hotspot 802-11-wireless.mode ap
