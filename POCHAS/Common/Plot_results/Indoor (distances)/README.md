@@ -30,8 +30,8 @@ pip install numpy scipy matplotlib
 ### Data Structure
 1.  **Anchor Configuration (`.json`)**: A dictionary mapping anchor IDs to their `[X, Y, Z]` coordinates.
     * *Example*: `{"2": [2.8, 0.0, 0.0], "10": [0.0, 0.0, 0.0]}`.
-2.  **Distance Logs (`.txt`)**: A CSV-style log containing the RSSI, a JSON-formatted dictionary of distances to detected anchors, and metadata[cite: 1, 2, 3].
-    *Example line*: `-62.54,{"2": 2.76, "4": 2.29, "10": 1.66},1,347269,58.9`[cite: 1].
+2.  **Distance Logs (`.txt`)**: A CSV-style log containing the RSSI, a JSON-formatted dictionary of distances to detected anchors, and metadata.
+    * *Example line*: `-62.54,{"2": 2.76, "4": 2.29, "10": 1.66},1,347269,58.9`
 
 
 ## 🚀 Execution
