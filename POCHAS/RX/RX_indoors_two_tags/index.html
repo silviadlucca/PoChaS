@@ -102,7 +102,7 @@
         /* Data grid */
         .data-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 15px;
         }
 
@@ -310,13 +310,6 @@
 </div>
 
 <script>
-    // Variables para darle "memoria" a la web de lo último que ha dicho cada Tag
-    let tagMemory = {
-        1: { anchors: {}, rssis: {}, timestamp: 0 },
-        2: { anchors: {}, rssis: {}, timestamp: 0 }
-    };
-    let globalTemp = '--';
-    let globalLevel = '--';
 
     async function fetchData() {
         try {
@@ -335,67 +328,46 @@
         const gpsDataDiv = document.getElementById('gps-data');
         const warningBox = document.getElementById('connection-warning');
 
-        if (data && data.update_id !== undefined && data.update_id !== lastUpdateId) {
+        if (data.update_id !== undefined && data.update_id !== lastUpdateId) {
             lastUpdateId = data.update_id;
             lastUpdateTime = Date.now(); 
             warningBox.style.display = 'none';
-            
-            // Cuando llega información nueva, actualizamos el almacén de ese Tag específico
-            if (data.tag_id !== undefined) {
-                tagMemory[data.tag_id] = {
-                    anchors: data.anchors || {},
-                    rssis: data.rssis || {},
-                    timestamp: Date.now()
-                };
-            }
-            
-            if (data.temperature !== undefined) globalTemp = data.temperature + ' °C';
-            if (data.level !== undefined) globalLevel = data.level + ' dB';
-            
+
+
         } else {
             if (Date.now() - lastUpdateTime > 15000) {
                 warningBox.style.display = 'block';
             }
         }
 
-        let anchorsHtml = "";
+        const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
+        const level = data.level !== undefined ? data.level + ' dB' : '--';
         
-        // Colores para diferenciar los tags (Azul para Tag 1, Naranja para Tag 2)
-        const tagColors = { 1: '#2980b9', 2: '#e67e22' };
-
-        // Recorremos la memoria de ambos Tags y creamos una cajita por cada Ancla que hayan visto
-        for (let tId of [1, 2]) {
-            let memory = tagMemory[tId];
-            
-            // Solo mostramos las anclas si ese Tag ha respondido en los últimos 10 segundos
-            if (Date.now() - memory.timestamp < 10000 && Object.keys(memory.anchors).length > 0) {
-                for (const [a_id, dist] of Object.entries(memory.anchors)) {
-                    if (dist !== null && dist !== undefined) {
-                        let rssiVal = (memory.rssis && memory.rssis[a_id] !== undefined) ? memory.rssis[a_id] : null;
-                        let rssiStr = rssiVal !== null ? `${Number(rssiVal).toFixed(1)} dBm` : '-- dBm';
-                        let boxColor = tagColors[tId] || '#7f8c8d';
-                        
-                        anchorsHtml += `
-                            <div class="data-item" style="border-top: 4px solid ${boxColor};">
-                                <span class="data-label" style="color: ${boxColor}; font-size: 13px; font-weight: 800;">🏷️ TAG ${tId}</span>
-                                <span class="data-label" style="margin-top: 8px;">📍 Anchor ${a_id}</span>
-                                <span class="data-value">${Number(dist).toFixed(2)} m</span>
-                                <span class="data-rssi">📶 RSSI: ${rssiStr}</span>
-                            </div>`;
-                    }
+        let anchorsHtml = "";
+        if (data.anchors && Object.keys(data.anchors).length > 0) {
+            for (const [id, dist] of Object.entries(data.anchors)) {
+                if (dist !== null && dist !== undefined) {
+                    let rssiVal = (data.rssis && data.rssis[id] !== undefined) ? data.rssis[id] : null;
+                    let rssiStr = rssiVal !== null ? `${Number(rssiVal).toFixed(1)} dBm` : '-- dBm';
+                    
+                    anchorsHtml += `
+                        <div class="data-item">
+                            <span class="data-label">📍 Anchor ${id}</span>
+                            <span class="data-value">${Number(dist).toFixed(2)} m</span>
+                            <span class="data-rssi">📶 RSSI: ${rssiStr}</span>
+                        </div>`;
                 }
             }
         }
 
         if (anchorsHtml === "") {
-            anchorsHtml = `<div class="data-item"><span class="data-label">📍 Anchors</span><span class="data-value">Esperando a los tags...</span></div>`;
+            anchorsHtml = `<div class="data-item"><span class="data-label">📍 Anchors</span><span class="data-value">--</span></div>`;
         }
 
         gpsDataDiv.className = "data-grid";
-        // Añadimos las cajas de temperatura, nivel, y toda la lista de anclas de ambos tags
         gpsDataDiv.innerHTML = `
-            <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${globalTemp}</span></div>
-            <div class="data-item"><span class="data-label">📶 Level</span><span class="data-value">${globalLevel}</span></div>
+            <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${temp}</span></div>
+            <div class="data-item"><span class="data-label">📶 Level</span><span class="data-value">${level}</span></div>
             ${anchorsHtml}
         `;
     }
