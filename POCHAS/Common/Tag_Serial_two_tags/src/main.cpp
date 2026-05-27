@@ -19,7 +19,7 @@ void TaskUWB(void *pvParameters);
 void TaskSerial(void *pvParameters);
 
 // ===== TAG IDENTIFICATION =====
-#define TAG_ID 1 
+#define TAG_ID 1
 #define MAX_ANCHORS 10
 
 // ===== SERIAL CONFIGURATION =====

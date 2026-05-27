@@ -212,6 +212,7 @@ def write_measure(temperature, level, anchors):
         "temperature": temperature,
         "level": level,
         "anchors": anchors,
+        "rssis": rssis,
         "update_id": update_counter
     }
 
@@ -265,19 +266,20 @@ if __name__ == '__main__':
                             data = read_tag_data()
 
                             if data:
-                                tag, timestamp, anchors = data
+                                tag, timestamp, anchors, rssis = data
 
                                 anchors_str = json.dumps(anchors)
+                                rssis_str = json.dumps(rssis)
                                
                                 level = run_measurement(usrp_serial, freq, gain, output_prefix, samp_rate, max_iterations)
                                 level2 = int(level*100)/100
                                 temperature = get_pi_temperature()
 
-                                txt_file.write(f"{level2},{anchors_str},{tag},{timestamp},{temperature}\n")
+                                txt_file.write(f"{level2},{anchors_str},{rssis_str},{tag},{timestamp},{temperature}\n")
                                 txt_file.flush()
-                                print(f"{level2}  {anchors_str} {tag} {timestamp} {temperature}\n")
+                                print(f"{level2}  {anchors_str} {rssis_str} {tag} {timestamp} {temperature}\n")
 
-                                write_measure(temperature, level2, anchors)
+                                write_measure(temperature, level2, anchors, rssis)
                                 play_beep()
                             sleep(1)
                         except Exception as e:
