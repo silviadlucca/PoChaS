@@ -7,6 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.optimize import least_squares
 
+# --- CONFIGURATION ---
+USE_MIN_ANCHORS = 1  # 1: Use only the 4 anchors with the best RSSI. 0: Use all detected anchors.
+
 # --- FILE SEARCH FUNCTIONS ---
 def get_latest_file(extension, directory="."):
     """
@@ -70,7 +73,8 @@ def process_log_file(filepath, anchors_config):
     # We use the last position as the seed for the next calculation
     last_position = (0.0, 0.0, 0.0) 
     
-    log_pattern = re.compile(r'^\s*([-\d\.]+)\s*,\s*(\{.*?\})')
+    # EXPRESIÓN REGULAR ACTUALIZADA: Captura SDR RSSI, dict de distancias y dict de RSSIs de anclas
+    log_pattern = re.compile(r'^\s*([-\d\.]+)\s*,\s*(\{.*?\})\s*,\s*(\{.*?\})')
     
     with open(filepath, 'r') as file:
         for line_num, line in enumerate(file, 1):
@@ -80,11 +84,28 @@ def process_log_file(filepath, anchors_config):
             match = log_pattern.match(line)
             if match:
                 try:
-                    rssi_val = float(match.group(1))
+                    sdr_rssi_val = float(match.group(1))
                     distances = ast.literal_eval(match.group(2))
+                    rssis = ast.literal_eval(match.group(3))
                     
                     if not distances:
                         continue 
+                        
+                    # Logic to select only the 4 anchors with the best signal (highest RSSI)
+                    if USE_MIN_ANCHORS == 1 and len(distances) > 4:
+                        # Order the anchor IDs based on their RSSI values from highest to lowest.
+                        # We use reverse=True because an RSSI of -60 is better than one of -90.
+                        sorted_anchor_ids = sorted(
+                            distances.keys(), 
+                            key=lambda k: rssis.get(k, -100), 
+                            reverse=True
+                        )
+                        
+                        # We keep only the 4 best
+                        top_4_ids = sorted_anchor_ids[:4]
+                        
+                        # Reconstruct the distances dictionary with only these 4 anchors
+                        distances = {k: distances[k] for k in top_4_ids}
                         
                     pos = calculate_tag_position(distances, anchors_config, last_position)
                     
@@ -92,7 +113,7 @@ def process_log_file(filepath, anchors_config):
                         x_history.append(pos[0])
                         y_history.append(pos[1])
                         z_history.append(pos[2])
-                        rssi_history.append(rssi_val)
+                        rssi_history.append(sdr_rssi_val)
                         last_position = pos # Update seed for next iteration
                         
                 except Exception as e:
@@ -103,7 +124,7 @@ def process_log_file(filepath, anchors_config):
 def plot_trajectory_2d_and_height(x_vals, y_vals, z_vals, rssi_vals, anchors_config):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))
     
-    # ---------------------------------------------------------ç
+    # ---------------------------------------------------------
     for a_id, coords in anchors_config.items():
         ax1.scatter(coords[0], coords[1], c='red', marker='^', s=150, zorder=5)
         ax1.text(coords[0], coords[1] + 0.15, f"A{a_id}", fontsize=11, fontweight='bold')
@@ -111,7 +132,7 @@ def plot_trajectory_2d_and_height(x_vals, y_vals, z_vals, rssi_vals, anchors_con
     scatter = ax1.scatter(x_vals, y_vals, c=rssi_vals, cmap='viridis', s=60, edgecolor='black', zorder=3)
     
     cbar = plt.colorbar(scatter, ax=ax1, pad=0.05)
-    cbar.set_label('RSSI (dBm)')
+    cbar.set_label('SDR RSSI (dBm)')
 
     ax1.plot(x_vals, y_vals, c='gray', linestyle='--', alpha=0.6, zorder=2)
     ax1.set_title('2D Trajectory (X vs Y)')
@@ -137,7 +158,6 @@ def plot_trajectory_3d(x_vals, y_vals, z_vals, rssi_vals, anchors_config):
     ax = fig.add_subplot(111, projection='3d')
     
     for a_id, coords in anchors_config.items():
-        # coords es [x, y, z]
         ax.scatter(coords[0], coords[1], coords[2], c='red', marker='^', s=150, zorder=5)
         ax.text(coords[0], coords[1], coords[2] + 0.3, f"A{a_id}", fontsize=11, fontweight='bold')
 
@@ -148,7 +168,7 @@ def plot_trajectory_3d(x_vals, y_vals, z_vals, rssi_vals, anchors_config):
     ax.plot(x_vals, y_vals, z_vals, c='gray', linestyle='--', alpha=0.6, zorder=2)
 
     cbar = plt.colorbar(scatter, ax=ax, pad=0.1, shrink=0.7)
-    cbar.set_label('RSSI (dBm)')
+    cbar.set_label('SDR RSSI (dBm)')
 
     ax.set_title('3D Trajectory of the Tag (X, Y, Z)')
     ax.set_xlabel('X (metros)')
