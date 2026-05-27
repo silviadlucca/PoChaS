@@ -19,21 +19,21 @@ void TaskUWB(void *pvParameters);
 void TaskSerial(void *pvParameters);
 
 // ===== TAG IDENTIFICATION =====
-#define TAG_ID 1
-#define MAX_ANCHORS 10
+#define TAG_ID 2
+#define MAX_ANCHORS 2
 
 // ===== SERIAL CONFIGURATION =====
 const unsigned long SERIAL_BAUD_RATE = 921600;
 const size_t SERIAL_JSON_CAPACITY = 4096;
 
 // ===== TDMA Configuration (INDOOR) =====
-const unsigned long TDMA_CYCLE_MS = 66;
-// Target: ~30 Hz
-const unsigned long TDMA_SLOT_DURATION_MS = 33;  // Full cycle for this tag
+const unsigned long TDMA_CYCLE_MS = 200;
+// Target: ~30 Hz (Ahora adaptado a TDMA robusto)
+const unsigned long TDMA_SLOT_DURATION_MS = 100;  // Slot for this tag
 
 // ===== RANGING CONFIGURATION =====
-int NUM_ANCHORS = MAX_ANCHORS; 
-int ID_PONG[MAX_ANCHORS] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+int NUM_ANCHORS = 2; 
+int ID_PONG[MAX_ANCHORS] = {5, 9};
 
 // Queue for Inter-Core Communication
 struct TagDataPacket {
@@ -49,7 +49,7 @@ struct TagDataPacket {
 QueueHandle_t uwbQueue;
 
 // ===== DYNAMIC ANCHOR SKIPPING (Core 1 Local) =====
-bool anchor_is_active[MAX_ANCHORS] = {true, true, true, true, true, true, true, true, true, true};
+bool anchor_is_active[MAX_ANCHORS] = {true, true};
 int anchor_fail_count[MAX_ANCHORS] = {0};
 unsigned long anchor_inactive_ts[MAX_ANCHORS] = {0};
 const int MAX_FAILURES = 2;
@@ -164,153 +164,153 @@ void TaskUWB(void *pvParameters) {
     const unsigned long RESPONSE_TIMEOUT = 10;
     int rx_status;
     int fin_de_com = 0;
-    unsigned long lastUpdate = millis();
+    
     unsigned long lastActivityTime = millis();
     bool lowPowerMode = false;
-    unsigned long updateInterval = 12;
+    unsigned long last_cycle_measured = 0xFFFFFFFF; // Valor inicial para asegurar la primera lectura
 
     for(;;) {
         unsigned long currentMillis = millis();
 
         if (!lowPowerMode && (currentMillis - lastActivityTime >= 300000)) {
             lowPowerMode = true;
-            updateInterval = 1000;
         }
 
-        if (currentMillis - lastUpdate >= updateInterval) {
-            lastUpdate = currentMillis;
-            unsigned long time_in_cycle = currentMillis % TDMA_CYCLE_MS;
-            unsigned long assigned_slot_start = (TAG_ID - 1) * TDMA_SLOT_DURATION_MS;
-            unsigned long assigned_slot_end = assigned_slot_start + TDMA_SLOT_DURATION_MS;
-            bool is_my_slot = (time_in_cycle >= assigned_slot_start && time_in_cycle < assigned_slot_end);
+        // --- LÓGICA TDMA POR CICLOS ---
+        unsigned long current_cycle = currentMillis / TDMA_CYCLE_MS;
+        unsigned long time_in_cycle = currentMillis % TDMA_CYCLE_MS;
+        unsigned long assigned_slot_start = (TAG_ID - 1) * TDMA_SLOT_DURATION_MS;
+        unsigned long assigned_slot_end = assigned_slot_start + TDMA_SLOT_DURATION_MS;
+        bool is_my_slot = (time_in_cycle >= assigned_slot_start && time_in_cycle < assigned_slot_end);
 
-            if (is_my_slot && !lowPowerMode) {
-                lastActivityTime = currentMillis;
+        // Se ejecuta si es tu slot Y todavía no has medido en este ciclo
+        if (is_my_slot && current_cycle != last_cycle_measured && !lowPowerMode) {
+            last_cycle_measured = current_cycle;
+            lastActivityTime = currentMillis;
 
-                for(int k=0; k<NUM_ANCHORS; k++) {
-                   local_anchor_responded[k] = false;
-                }
-
-                for (int ii = 0; ii < NUM_ANCHORS; ii++) {
-                    if (!anchor_is_active[ii]) {
-                        if (millis() - anchor_inactive_ts[ii] < RETRY_INTERVAL) {
-                            local_anchor_distance[ii] = 0;
-                            local_anchor_raw_distance[ii] = 0;
-                            local_pot_sig[ii] = -120.0f;
-                            local_anchor_pd[ii] = 0.0f;
-                            local_anchor_los[ii] = 0;
-                            continue;
-                        }
-                    }
-
-                    DW3000.setDestinationID(ID_PONG[ii]);
-                    fin_de_com = 0;
-                    curr_stage = 0;
-                    waitingForResponse = false;
-
-                    while (fin_de_com == 0) {
-                        if (waitingForResponse && ((millis() - timeoutStart) >= RESPONSE_TIMEOUT)) {
-                            anchor_fail_count[ii]++;
-                            if (anchor_fail_count[ii] >= MAX_FAILURES) {
-                                anchor_is_active[ii] = false;
-                                anchor_inactive_ts[ii] = millis();
-                                anchor_fail_count[ii] = 0;
-                            }
-                            DW3000.clearSystemStatus();
-                            DW3000.configureAsTX(); 
-                            
-                            local_anchor_distance[ii] = 0;
-                            local_anchor_raw_distance[ii] = 0; local_pot_sig[ii] = -120.0f; local_anchor_pd[ii] = 0.0f; local_anchor_los[ii] = 0;
-                            fin_de_com = 1; break;
-                        }
-
-                        switch (curr_stage) {
-                            case 0: 
-                                DW3000.ds_sendFrame(1);
-                                tx = DW3000.readTXTimestamp();
-                                curr_stage = 1; timeoutStart = millis(); waitingForResponse = true;
-                                break;
-                            case 1: 
-                                if ((rx_status = DW3000.receivedFrameSucc())) {
-                                    DW3000.clearSystemStatus();
-                                    if ((rx_status == 1) && (DW3000.getDestinationID() == ID_PONG[ii]) && !DW3000.ds_isErrorFrame()) {
-                                        curr_stage = 2;
-                                        waitingForResponse = false;
-                                    } else {
-                                        anchor_fail_count[ii]++;
-                                        if (anchor_fail_count[ii] >= MAX_FAILURES) { anchor_is_active[ii] = false; anchor_inactive_ts[ii] = millis(); anchor_fail_count[ii] = 0;
-                                        }
-                                        DW3000.clearSystemStatus();
-                                        DW3000.configureAsTX();
-                                        local_anchor_distance[ii] = 0; local_anchor_raw_distance[ii] = 0; local_pot_sig[ii] = -120.0f; local_anchor_pd[ii] = 0.0f; local_anchor_los[ii] = 0; fin_de_com = 1;
-                                    }
-                                }
-                                break;
-                            case 2: 
-                                rx = DW3000.readRXTimestamp();
-                                DW3000.ds_sendFrame(3);
-                                t_roundA = rx - tx; tx = DW3000.readTXTimestamp(); t_replyA = tx - rx;
-                                curr_stage = 3; timeoutStart = millis();
-                                waitingForResponse = true;
-                                break;
-                            case 3: 
-                                if ((rx_status = DW3000.receivedFrameSucc())) {
-                                    DW3000.clearSystemStatus();
-                                    if (rx_status == 1 && !DW3000.ds_isErrorFrame()) {
-                                        clock_offset = DW3000.getRawClockOffset();
-                                        curr_stage = 4; waitingForResponse = false;
-                                    } else {
-                                        anchor_fail_count[ii]++;
-                                        if (anchor_fail_count[ii] >= MAX_FAILURES) { anchor_is_active[ii] = false; anchor_inactive_ts[ii] = millis(); anchor_fail_count[ii] = 0;
-                                        }
-                                        DW3000.clearSystemStatus();
-                                        DW3000.configureAsTX();
-                                        local_anchor_distance[ii] = 0; local_anchor_raw_distance[ii] = 0; local_pot_sig[ii] = -120.0f; local_anchor_pd[ii] = 0.0f; local_anchor_los[ii] = 0; fin_de_com = 1;
-                                    }
-                                }
-                                break;
-                            case 4: 
-                                ranging_time = DW3000.ds_processRTInfo(t_roundA, t_replyA, DW3000.read(0x12, 0x04), DW3000.read(0x12, 0x08), clock_offset);
-                                float distance_meters = DW3000.convertToCM(ranging_time) / 100.0;
-                                local_pot_sig[ii] = DW3000.getSignalStrength();
-                                local_anchor_pd[ii] = DW3000.getPowerDifference();
-                                local_anchor_los[ii] = classifyLOSState(local_anchor_pd[ii]);
-                                anchor_is_active[ii] = true;
-                                anchor_fail_count[ii] = 0;
-                                local_anchor_raw_distance[ii] = (distance_meters > 0) ? distance_meters : 0.0f;
-                                if (distance_meters > 0) {
-                                    local_anchor_responded[ii] = true;
-                                    float median_dist = calculateMedian(distance_meters, ii);
-                                    float plausibility_limited_dist = constrainSuspiciousPositiveJump(median_dist, ii, local_anchor_los[ii], millis());
-                                    local_anchor_distance[ii] = kalmanFilterDistance(plausibility_limited_dist, ii);
-                                } else {
-                                    local_anchor_responded[ii] = false;
-                                    local_anchor_distance[ii] = 0;
-                                }
-                                fin_de_com = 1;
-                                break;
-                        }
-                    }
-                } 
-                int responding_anchors = 0;
-                for(int k=0; k<NUM_ANCHORS; k++) {
-                    if(local_anchor_responded[k]) responding_anchors++;
-                }
-
-                TagDataPacket packet;
-                packet.anchors_visible = responding_anchors;
-                packet.timestamp = millis();
-                for(int i=0; i<NUM_ANCHORS; i++) {
-                    packet.anchor_dist[i] = local_anchor_distance[i];
-                    packet.anchor_raw_dist[i] = local_anchor_raw_distance[i];
-                    packet.anchor_rssi[i] = local_pot_sig[i];
-                    packet.anchor_pd[i] = local_anchor_pd[i];
-                    packet.anchor_resp[i] = local_anchor_responded[i];
-                    packet.anchor_los[i] = local_anchor_los[i];
-                }
-                
-                xQueueOverwrite(uwbQueue, &packet);
+            for(int k=0; k<NUM_ANCHORS; k++) {
+               local_anchor_responded[k] = false;
             }
+
+            for (int ii = 0; ii < NUM_ANCHORS; ii++) {
+                if (!anchor_is_active[ii]) {
+                    if (millis() - anchor_inactive_ts[ii] < RETRY_INTERVAL) {
+                        local_anchor_distance[ii] = 0;
+                        local_anchor_raw_distance[ii] = 0;
+                        local_pot_sig[ii] = -120.0f;
+                        local_anchor_pd[ii] = 0.0f;
+                        local_anchor_los[ii] = 0;
+                        continue;
+                    }
+                }
+
+                DW3000.setDestinationID(ID_PONG[ii]);
+                fin_de_com = 0;
+                curr_stage = 0;
+                waitingForResponse = false;
+
+                while (fin_de_com == 0) {
+                    if (waitingForResponse && ((millis() - timeoutStart) >= RESPONSE_TIMEOUT)) {
+                        anchor_fail_count[ii]++;
+                        if (anchor_fail_count[ii] >= MAX_FAILURES) {
+                            anchor_is_active[ii] = false;
+                            anchor_inactive_ts[ii] = millis();
+                            anchor_fail_count[ii] = 0;
+                        }
+                        DW3000.clearSystemStatus();
+                        DW3000.configureAsTX(); 
+                        
+                        local_anchor_distance[ii] = 0;
+                        local_anchor_raw_distance[ii] = 0; local_pot_sig[ii] = -120.0f; local_anchor_pd[ii] = 0.0f; local_anchor_los[ii] = 0;
+                        fin_de_com = 1; break;
+                    }
+
+                    switch (curr_stage) {
+                        case 0: 
+                            DW3000.ds_sendFrame(1);
+                            tx = DW3000.readTXTimestamp();
+                            curr_stage = 1; timeoutStart = millis(); waitingForResponse = true;
+                            break;
+                        case 1: 
+                            if ((rx_status = DW3000.receivedFrameSucc())) {
+                                DW3000.clearSystemStatus();
+                                if ((rx_status == 1) && (DW3000.getDestinationID() == ID_PONG[ii]) && !DW3000.ds_isErrorFrame()) {
+                                    curr_stage = 2;
+                                    waitingForResponse = false;
+                                } else {
+                                    anchor_fail_count[ii]++;
+                                    if (anchor_fail_count[ii] >= MAX_FAILURES) { anchor_is_active[ii] = false; anchor_inactive_ts[ii] = millis(); anchor_fail_count[ii] = 0;
+                                    }
+                                    DW3000.clearSystemStatus();
+                                    DW3000.configureAsTX();
+                                    local_anchor_distance[ii] = 0; local_anchor_raw_distance[ii] = 0; local_pot_sig[ii] = -120.0f; local_anchor_pd[ii] = 0.0f; local_anchor_los[ii] = 0; fin_de_com = 1;
+                                }
+                            }
+                            break;
+                        case 2: 
+                            rx = DW3000.readRXTimestamp();
+                            DW3000.ds_sendFrame(3);
+                            t_roundA = rx - tx; tx = DW3000.readTXTimestamp(); t_replyA = tx - rx;
+                            curr_stage = 3; timeoutStart = millis();
+                            waitingForResponse = true;
+                            break;
+                        case 3: 
+                            if ((rx_status = DW3000.receivedFrameSucc())) {
+                                DW3000.clearSystemStatus();
+                                if (rx_status == 1 && !DW3000.ds_isErrorFrame()) {
+                                    clock_offset = DW3000.getRawClockOffset();
+                                    curr_stage = 4; waitingForResponse = false;
+                                } else {
+                                    anchor_fail_count[ii]++;
+                                    if (anchor_fail_count[ii] >= MAX_FAILURES) { anchor_is_active[ii] = false; anchor_inactive_ts[ii] = millis(); anchor_fail_count[ii] = 0;
+                                    }
+                                    DW3000.clearSystemStatus();
+                                    DW3000.configureAsTX();
+                                    local_anchor_distance[ii] = 0; local_anchor_raw_distance[ii] = 0; local_pot_sig[ii] = -120.0f; local_anchor_pd[ii] = 0.0f; local_anchor_los[ii] = 0; fin_de_com = 1;
+                                }
+                            }
+                            break;
+                        case 4: 
+                            ranging_time = DW3000.ds_processRTInfo(t_roundA, t_replyA, DW3000.read(0x12, 0x04), DW3000.read(0x12, 0x08), clock_offset);
+                            float distance_meters = DW3000.convertToCM(ranging_time) / 100.0;
+                            local_pot_sig[ii] = DW3000.getSignalStrength();
+                            local_anchor_pd[ii] = DW3000.getPowerDifference();
+                            local_anchor_los[ii] = classifyLOSState(local_anchor_pd[ii]);
+                            anchor_is_active[ii] = true;
+                            anchor_fail_count[ii] = 0;
+                            local_anchor_raw_distance[ii] = (distance_meters > 0) ? distance_meters : 0.0f;
+                            if (distance_meters > 0) {
+                                local_anchor_responded[ii] = true;
+                                float median_dist = calculateMedian(distance_meters, ii);
+                                float plausibility_limited_dist = constrainSuspiciousPositiveJump(median_dist, ii, local_anchor_los[ii], millis());
+                                local_anchor_distance[ii] = kalmanFilterDistance(plausibility_limited_dist, ii);
+                            } else {
+                                local_anchor_responded[ii] = false;
+                                local_anchor_distance[ii] = 0;
+                            }
+                            fin_de_com = 1;
+                            break;
+                    }
+                }
+            } 
+            int responding_anchors = 0;
+            for(int k=0; k<NUM_ANCHORS; k++) {
+                if(local_anchor_responded[k]) responding_anchors++;
+            }
+
+            TagDataPacket packet;
+            packet.anchors_visible = responding_anchors;
+            packet.timestamp = millis();
+            for(int i=0; i<NUM_ANCHORS; i++) {
+                packet.anchor_dist[i] = local_anchor_distance[i];
+                packet.anchor_raw_dist[i] = local_anchor_raw_distance[i];
+                packet.anchor_rssi[i] = local_pot_sig[i];
+                packet.anchor_pd[i] = local_anchor_pd[i];
+                packet.anchor_resp[i] = local_anchor_responded[i];
+                packet.anchor_los[i] = local_anchor_los[i];
+            }
+            
+            xQueueOverwrite(uwbQueue, &packet);
         }
         vTaskDelay(1);
     }
@@ -370,7 +370,7 @@ void setup() {
   DW3000.configureAsTX();
   DW3000.clearSystemStatus();
 
-  // Mantenemos la creación de tareas igual que en tu código original [cite: 95, 96]
+  // Mantenemos la creación de tareas igual que en tu código original
   xTaskCreatePinnedToCore(TaskUWB, "UWB_Task", 10000, NULL, 2, NULL, 1);
   xTaskCreatePinnedToCore(TaskSerial, "Serial_Task", 10000, NULL, 1, NULL, 0);
 }

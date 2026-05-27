@@ -119,6 +119,12 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.05);
         }
+        
+        .data-item.highlight-tag {
+            background: #e8f4fd;
+            border-color: #3498db;
+            box-shadow: 0 4px 8px rgba(52, 152, 219, 0.15);
+        }
 
         .data-label {
             display: block;
@@ -129,11 +135,20 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
+        
+        .highlight-tag .data-label {
+            color: #2980b9;
+        }
 
         .data-value {
             font-size: 20px;
             font-weight: bold;
             color: var(--text-main);
+        }
+        
+        .highlight-tag .data-value {
+            color: #2c3e50;
+            font-size: 22px;
         }
         
         .data-rssi {
@@ -332,8 +347,6 @@
             lastUpdateId = data.update_id;
             lastUpdateTime = Date.now(); 
             warningBox.style.display = 'none';
-
-
         } else {
             if (Date.now() - lastUpdateTime > 15000) {
                 warningBox.style.display = 'block';
@@ -342,6 +355,9 @@
 
         const temp = data.temperature !== undefined ? data.temperature + ' °C' : '--';
         const level = data.level !== undefined ? data.level + ' dB' : '--';
+        
+        // Obtenemos el Tag ID
+        const currentTag = data.tag_id !== undefined ? `Tag ${data.tag_id}` : '--';
         
         let anchorsHtml = "";
         if (data.anchors && Object.keys(data.anchors).length > 0) {
@@ -366,6 +382,10 @@
 
         gpsDataDiv.className = "data-grid";
         gpsDataDiv.innerHTML = `
+            <div class="data-item highlight-tag">
+                <span class="data-label">🏷️ TAG ACTIVO</span>
+                <span class="data-value">${currentTag}</span>
+            </div>
             <div class="data-item"><span class="data-label">🌡️ Temp</span><span class="data-value">${temp}</span></div>
             <div class="data-item"><span class="data-label">📶 Level</span><span class="data-value">${level}</span></div>
             ${anchorsHtml}
