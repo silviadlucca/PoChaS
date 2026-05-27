@@ -329,9 +329,12 @@ void TaskSerial(void *pvParameters) {
             doc["anchors_visible"] = packet.anchors_visible;
 
             JsonObject anchorDistances = doc.createNestedObject("anchor_distances");
+            JsonObject anchorRssis = doc.createNestedObject("anchor_rssis");
+            
             for (int i = 0; i < NUM_ANCHORS; i++) {
                 if (packet.anchor_resp[i]) {
                     anchorDistances[String(ID_PONG[i])] = packet.anchor_dist[i];
+                    anchorRssis[String(ID_PONG[i])] = packet.anchor_rssi[i];
                 }
             }
 

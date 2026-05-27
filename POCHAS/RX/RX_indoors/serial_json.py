@@ -23,8 +23,10 @@ def read_tag_data():
 
                     anchors = data.get("anchor_distances", {})
 
+                    rssis = data.get("anchor_rssis", {})
+
                     
-                    return tag, timestamp, anchors
+                    return tag, timestamp, anchors, rssis
                     
                 except json.JSONDecodeError:
                     print(f"Cable noise or invalid JSON: {line}")
