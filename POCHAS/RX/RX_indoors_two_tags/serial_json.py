@@ -1,42 +1,39 @@
 import serial
 import json
+import threading
 import time
+import queue
 
-def read_tag_data():
-    """Reads the serial port until a valid JSON with all required data is found."""
+data_queue = queue.Queue()
+
+def read_port(port_name):
     try:
-        ser = serial.Serial('/dev/ttyUSB0', 921600, timeout=1)
+        ser = serial.Serial(port_name, 921600, timeout=1)
         ser.flush()
-    
-    
         while True:
             if ser.in_waiting > 0:
-                # errors='replace' prevents the program from crashing if a corrupted byte arrives
                 line = ser.readline().decode('utf-8', errors='replace').rstrip()
-                
                 try:
                     data = json.loads(line)
-                    
-                    # We use .get() instead of [] to avoid KeyError if a field is missing
                     tag = data.get("tag_id")
                     timestamp = data.get("timestamp_ms")
-
                     anchors = data.get("anchor_distances", {})
-
                     rssis = data.get("anchor_rssis", {})
-
                     
-                    return tag, timestamp, anchors, rssis
-                    
+                    data_queue.put((tag, timestamp, anchors, rssis))
                 except json.JSONDecodeError:
-                    print(f"Cable noise or invalid JSON: {line}")
-                    continue
-                except Exception as e:
-                    print(f"Unexpected error processing data: {e}")
-                    continue
+                    pass
             else:
-                # Short pause to avoid saturating the Raspberry Pi's CPU
                 time.sleep(0.01)
-    except serial.SerialException as e:
-        print(f"Could not open serial port: {e}")
-        exit()
+    except Exception as e:
+        print(f"Puerto {port_name} no disponible: {e}")
+
+# Arrancamos los lectores en hilos separados
+threading.Thread(target=read_port, args=('/dev/ttyUSB0',), daemon=True).start()
+threading.Thread(target=read_port, args=('/dev/ttyUSB1',), daemon=True).start()
+
+def read_tag_data():
+    """Extrae el dato más antiguo de la cola si hay alguno"""
+    if not data_queue.empty():
+        return data_queue.get()
+    return None

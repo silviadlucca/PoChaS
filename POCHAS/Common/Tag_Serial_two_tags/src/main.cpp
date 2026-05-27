@@ -27,7 +27,7 @@ const unsigned long SERIAL_BAUD_RATE = 921600;
 const size_t SERIAL_JSON_CAPACITY = 4096;
 
 // ===== TDMA Configuration (INDOOR) =====
-const unsigned long TDMA_CYCLE_MS = 33;
+const unsigned long TDMA_CYCLE_MS = 66;
 // Target: ~30 Hz
 const unsigned long TDMA_SLOT_DURATION_MS = 33;  // Full cycle for this tag
 
