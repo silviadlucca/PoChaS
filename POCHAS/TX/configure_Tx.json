@@ -1,4 +1,5 @@
 {
   "frequency_Hz": 2400000000,
-  "Tx_Amplifier_Gain": 80
+  "Tx_Amplifier_Gain": 80,
+  "freq_presets": [433000000, 868000000, 2400000000]
 }

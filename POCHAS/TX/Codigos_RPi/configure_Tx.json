@@ -1,5 +1,10 @@
 {
+  "device_args": "",
   "frequency_Hz": 2400000000,
   "Tx_Amplifier_Gain": 80,
-  "frequency_presets_Hz": [433000000, 868000000, 2400000000]
+  "Sampling_rate_Hz": 1000000,
+  "Tone_frequency_Hz": 100000,
+  "Amplitude": 0.9,
+  "antenna": "TX/RX",
+  "freq_presets": [433000000, 868000000, 2400000000]
 }
