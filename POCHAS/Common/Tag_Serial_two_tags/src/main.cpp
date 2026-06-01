@@ -20,7 +20,7 @@ void TaskSerial(void *pvParameters);
 
 // ===== TAG IDENTIFICATION =====
 #define TAG_ID 2
-#define MAX_ANCHORS 2
+#define MAX_ANCHORS 9
 
 // ===== SERIAL CONFIGURATION =====
 const unsigned long SERIAL_BAUD_RATE = 921600;
@@ -32,8 +32,8 @@ const unsigned long TDMA_CYCLE_MS = 200;
 const unsigned long TDMA_SLOT_DURATION_MS = 100;  // Slot for this tag
 
 // ===== RANGING CONFIGURATION =====
-int NUM_ANCHORS = 2; 
-int ID_PONG[MAX_ANCHORS] = {5, 9};
+int NUM_ANCHORS = 9; 
+int ID_PONG[MAX_ANCHORS] = {1,2,3,4,5,6,7,8,9};
 
 // Queue for Inter-Core Communication
 struct TagDataPacket {
@@ -49,7 +49,7 @@ struct TagDataPacket {
 QueueHandle_t uwbQueue;
 
 // ===== DYNAMIC ANCHOR SKIPPING (Core 1 Local) =====
-bool anchor_is_active[MAX_ANCHORS] = {true, true};
+bool anchor_is_active[MAX_ANCHORS] = {true, true, true, true, true, true, true, true, true};
 int anchor_fail_count[MAX_ANCHORS] = {0};
 unsigned long anchor_inactive_ts[MAX_ANCHORS] = {0};
 const int MAX_FAILURES = 2;

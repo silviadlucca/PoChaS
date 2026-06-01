@@ -16,7 +16,7 @@ void printPerformanceStats();
 
 
 // ===== CONFIGURATION OF ANCHOR =====
-static int ID_PONG = 6; // Unique ID of the anchor (Cambiar esta linea en las 6 anclas)
+static int ID_PONG = 8; // Unique ID of the anchor (Cambiar esta linea en las 6 anclas)
 
 // ====== SERIAL COMMUNICATION ======
 const unsigned long SERIAL_BAUD_RATE = 921600;
