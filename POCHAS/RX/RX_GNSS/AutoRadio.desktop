@@ -1,9 +1,0 @@
-          
-[Desktop Entry]
-Type=Application
-Name=AutoRadio
-
-Exec=lxterminal -e  /home/pi/PoChaS/POCHAS/RX/RX_GNSS/start_rx.sh
-X-GNOME-Autostart-enabled=true
-
-
