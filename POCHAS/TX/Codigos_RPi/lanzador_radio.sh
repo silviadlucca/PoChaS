@@ -1,18 +1,30 @@
 #!/bin/bash
-echo "esperamos 30 segundos"
-sleep 10
-echo "ya pasaron 10"
-sleep 10
-echo "solo faltan 10"
-sleep 10
-echo "intentamos arrancar"
-# Esperamos 30 segundos para asegurarnos de que el entorno gráfico esté listo
+set -x
 
-cd /home/pi #nos aseguramos de estar en la carpeta del usuario pi
-export DISPLAY=: # para el que el entorno grafico funcione bien
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TARGET_HOME="${HOME:-/home/pi}"
+LOG_FILE="$TARGET_HOME/log_radio.txt"
 
-/usr/bin/python3 /home/pi/Desktop/TXv01/tx_medidas.py > /home/pi/log_radio.txt 2>&1
-#path de python - archivo a ejecutar - path del log de salida y errores
+exec >> "$LOG_FILE" 2>&1
 
-echo "el programa se cerro"
-echo -p "presiona enter para cerrar"
+export DISPLAY=:0
+export XAUTHORITY="$TARGET_HOME/.Xauthority"
+
+echo "Waiting for X11..."
+
+for i in $(seq 1 90); do
+    if [ -S /tmp/.X11-unix/X0 ] && [ -f "$TARGET_HOME/.Xauthority" ]; then
+        echo "X11 is ready"
+        break
+    fi
+    echo "X11 not ready yet, try $i"
+    sleep 2
+done
+
+if [ ! -S /tmp/.X11-unix/X0 ]; then
+    echo "ERROR: X11 did not start"
+    exit 1
+fi
+
+cd "$SCRIPT_DIR" || exit 1
+exec /usr/bin/python3 "$SCRIPT_DIR/tx_medidas.py"

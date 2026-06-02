@@ -8,7 +8,9 @@
 # Title: tx_medidas
 # GNU Radio version: 3.8.2.0
 #
-
+import os
+import json
+import subprocess
 from distutils.version import StrictVersion
 
 if __name__ == '__main__':
@@ -72,9 +74,10 @@ class tx_medidas(gr.top_block, Qt.QWidget):
         ##################################################
         # Variables
         ##################################################
-        self.samp_rate = samp_rate = 1e6
-        self.gain_tx = gain_tx = 80
-        self.freq = freq = 2400.0e6
+        config = self.load_config()
+        self.samp_rate = samp_rate = float(config.get("Sampling_rate_Hz", config.get("sampling_rate_Hz", 1e6)))
+        self.gain_tx = gain_tx = float(config.get("Tx_Amplifier_Gain", config.get("Tx_amplifier_gain_dB", 80)))
+        self.freq = freq = float(config.get("frequency_Hz", config.get("Frequency_Hz", 2400.0e6)))
 
         ##################################################
         # Blocks
@@ -95,6 +98,18 @@ class tx_medidas(gr.top_block, Qt.QWidget):
             self.top_grid_layout.setRowStretch(r, 1)
         for c in range(0, 2):
             self.top_grid_layout.setColumnStretch(c, 1)
+
+        ##################################################
+        # Config inicial
+        ##################################################
+        self.device_args = config.get("device_args", "")
+        self.freq_presets = config.get("freq_presets", [2400e6])
+        self.flowgraph_running = False
+
+        try:
+            self.detected_serial = self.detect_usrp_serial()
+        except Exception as e:
+            self.detected_serial = "no detectado ({})".format(e)
 
         # USRP sink
         self.uhd_usrp_sink_0 = uhd.usrp_sink(
