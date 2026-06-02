@@ -58,20 +58,11 @@ sudo raspi-config nonint do_vnc 0
 
 mkdir -p ~/.config/autostart
 
-ln -sf "$SCRIPT_DIR/AutoRadio.desktop" ~/.config/autostart/AutoRadio.desktop
-
-
-chmod +x "$SCRIPT_DIR/start_rx.sh"
-
-sudo raspi-config nonint do_vnc 0
-
-mkdir -p ~/.config/autostart
-
 echo "[Desktop Entry]
 Type=Application
-Name=AutoRadio
+Name=AutoRadio_TwoTags
 Exec=lxterminal -e $SCRIPT_DIR/start_rx.sh
-X-GNOME-Autostart-enabled=true" > ~/.config/autostart/AutoRadio.desktop
+X-GNOME-Autostart-enabled=true" > ~/.config/autostart/AutoRadio_TwoTags.desktop
 
 echo "Configuring Bluetooth AutoEnable..."
 sudo sed -i 's/#AutoEnable=true/AutoEnable=true/g' /etc/bluetooth/main.conf
