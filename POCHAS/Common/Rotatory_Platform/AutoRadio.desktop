@@ -3,7 +3,7 @@
 Type=Application
 Name=AutoRadio
 
-Exec=lxterminal -e  /home/pi/PoChaS/POCHAS/RX/RX_GNSS/start_rx.sh
+Exec=lxterminal -e  /home/pi/PoChaS/POCHAS/Common/Rotatory_Platform/start.sh
 X-GNOME-Autostart-enabled=true
 
 
