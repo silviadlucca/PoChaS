@@ -205,7 +205,7 @@ def get_pi_temperature():
 
 update_counter = 0
 
-def write_measure(temperature, level, anchors):
+def write_measure(temperature, level, anchors, rssis):
     global measure, update_counter
     update_counter += 1
     measure = {

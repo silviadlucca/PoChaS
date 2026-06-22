@@ -1,0 +1,45 @@
+PoChaS two-tag postprocess summary
+======================================
+Log: D:\GitHub\PoChaS\POCHAS\Common\Plot_results\Indoor (distances) two tags\2026-05-27_13-33-13_Rxfile.txt
+Anchors: D:\GitHub\PoChaS\POCHAS\Common\Plot_results\Indoor (distances) two tags\anchors.json
+Measurements parsed: 613
+Epochs paired/analyzed: 168
+
+Coverage
+--------
+Fused valid epochs: 158 (94.0%)
+Both tags without 3D fix: 0 (0.0%)
+Longest both-tags loss streak: 0 epochs, ~0 ms
+Tag 1 saved epochs: 3
+Tag 2 saved epochs: 24
+Fused source Tag 1: 54 epochs
+Fused source Tag 2: 104 epochs
+Rejected fused jumps: 10
+
+Height
+------
+Fused Z range: 4.631 m
+Correlation Y/Z: 0.420
+Height jump warnings: 3
+Weak height geometry epochs: 21
+High residual epochs: 1
+
+Anchor availability by tag
+--------------------------
+Tag 1 / Anchor 1: 93.5%
+Tag 1 / Anchor 2: 90.9%
+Tag 1 / Anchor 3: 81.8%
+Tag 1 / Anchor 4: 90.6%
+Tag 1 / Anchor 5: 95.4%
+Tag 2 / Anchor 1: 96.1%
+Tag 2 / Anchor 2: 91.8%
+Tag 2 / Anchor 3: 79.4%
+Tag 2 / Anchor 4: 100.0%
+Tag 2 / Anchor 5: 100.0%
+
+Reading guide
+-------------
+No epoch lost 3D coverage in both tags at the same time with the current filters.
+Tag 2 is selected more often by the fusion rule; inspect whether its orientation or antenna placement is more favorable.
+The fused height does not strongly follow corridor progress (Y). Review anchor geometry, calibration, and outlier filtering.
+Some epochs have weak vertical geometry. More anchors with different heights usually improve Z estimation.
