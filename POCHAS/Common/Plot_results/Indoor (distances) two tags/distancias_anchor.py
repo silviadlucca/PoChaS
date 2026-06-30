@@ -180,7 +180,7 @@ for idx in range(len(anchors)):
     anchor = anchors[(idx)]
     if anchor != 0:
         ax3.plot(anchor[0], anchor[1], 'D', markersize=10, color='black')
-ax3.plot([], [], 'D', color='black', label='Anchors')
+ax3.plot([], [], 'D', color='black',label='Anchors')
 
 ax3.set_title('2D Position')
 ax3.set_xlabel('X (m)')
