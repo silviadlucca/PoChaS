@@ -10,7 +10,7 @@ import utm
 # Permitir procesar mapas del IGN que tienen muchísima resolución
 Image.MAX_IMAGE_PIXELS = None
 
-carpeta_datos = r'C:\Users\sdluc\Documents\PoChaS\PoChaS\POCHAS\Common\Plot_results\Medidas_RSSI'
+carpeta_datos = r'C:\Users\sdluc\Documents\PoChaS\PoChaS\POCHAS\Common\Plot_results\Outdoor (map)'
 
 os.chdir(carpeta_datos)
 
@@ -67,7 +67,7 @@ limites_mapa = [[lat_min, lon_min], [lat_max, lon_max]]
 # 5. Extraer la imagen visual usando Pillow (soporta compresión JPEG nativa)
 if not os.path.exists(archivo_png):
     print("Extrayendo imagen del GeoTIFF con Pillow (solo ocurre la primera vez)...")
-    imagen_pil = Image.open(archivo_tif)
+    imagen_pil = Image.fromarray(tifffile.imread(archivo_tif))
     imagen_pil.save(archivo_png)
 
 # 6. Crear el mapa interactivo (Bloqueando descargas de internet)
