@@ -1,1 +1,4 @@
 *.xz
+.pio/
+.claude/
+.vscode/
