@@ -9,8 +9,8 @@
 #define BEACON_UWB_ID 250
 #endif
 
-static const char *AP_SSID = "Beacon-Calibrador";
-static const char *AP_PASSWORD = "anclas1234";
+static const char *AP_SSID = "Beacon-Calibrator";
+static const char *AP_PASSWORD = "anchors1234";
 
 static const unsigned long SERIAL_BAUD_RATE = 921600;
 static const uint8_t MAX_ANCHORS = 15;
@@ -50,7 +50,6 @@ void setup() {
 
   loadDistances();
   
-  // Iniciamos el bus SPI solo una vez aquí
   SPI.begin();
   initializeDW3000();
 
@@ -64,7 +63,7 @@ void setup() {
   server.on("/data.json", HTTP_GET, handleDownload);
   server.begin();
 
-  Serial.println("\n=== RECOLECTOR DE DISTANCIAS UWB ===");
+  Serial.println("\n=== DISTANCES UWB ===");
   Serial.printf("WiFi: %s / %s\n", AP_SSID, AP_PASSWORD);
   Serial.printf("Web: http://%s/\n", WiFi.softAPIP().toString().c_str());
 }
@@ -89,7 +88,7 @@ void initializeDW3000() {
   }
   
   if (retries >= 5) {
-    Serial.println("[Aviso] DW3000 no reportó estado IDLE, forzando inicio de todas formas.");
+    Serial.println("[Aviso] DW3000 did not report IDLE status, forcing initialization.");
   }
 
   DW3000.setChannel(CHANNEL_5);
@@ -297,7 +296,7 @@ String htmlPage() {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Recolector UWB</title>
+  <title>Distances UWB</title>
   <style>
     body { font-family: system-ui, sans-serif; background: #f5f7fb; color: #172033; max-width: 600px; margin: 0 auto; padding: 20px; }
     section { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
@@ -313,20 +312,20 @@ String htmlPage() {
   </style>
 </head>
 <body>
-  <h2>Recolector de Distancias UWB</h2>
+  <h2>Distances UWB</h2>
   
   <section>
-    <label><strong>Estoy en el Anchor ID:</strong></label><br><br>
+    <label><strong>I am in anchor ID:</strong></label><br><br>
     <input type="number" id="currentId" min="1" max="14" value="2">
-    <button id="btnMeasure" onclick="measure()">Medir distancias</button>
+    <button id="btnMeasure" onclick="measure()">Measure Distances</button>
     <p id="status" style="color: #666;"></p>
   </section>
 
   <section>
-    <button class="secondary" onclick="window.location.href='/data.json'">Descargar JSON</button>
-    <button class="danger" onclick="resetData()" style="float: right;">Borrar todo</button>
-    <h3>Estado actual (JSON):</h3>
-    <pre id="jsonPreview">Cargando...</pre>
+    <button class="secondary" onclick="window.location.href='/data.json'">Download JSON</button>
+    <button class="danger" onclick="resetData()" style="float: right;">Clear All</button>
+    <h3>Current Status (JSON):</h3>
+    <pre id="jsonPreview">Loading...</pre>
   </section>
 
 <script>
@@ -343,7 +342,7 @@ String htmlPage() {
     
     btn.disabled = true;
     status.className = "";
-    status.textContent = "Escaneando anclas activas... (tardará unos segundos)";
+    status.textContent = "Scanning active anchors... (this will take a few seconds)";
     
     try {
       const res = await fetch(`/api/measure?current=${id}`, { method: 'POST' });
@@ -351,22 +350,22 @@ String htmlPage() {
       
       if (data.count > 0) {
         status.className = "success";
-        status.textContent = `¡Medición guardada! Se encontraron ${data.count} anclas.`;
+        status.textContent = `Measurement saved! Found ${data.count} anchors.`;
         inputId.value = parseInt(id) + 1;
       } else {
         status.className = "error";
-        status.textContent = "Aviso: No se ha detectado ninguna otra ancla o falló la comunicación.";
+        status.textContent = "Warning: No other anchors detected or communication failed.";
       }
       loadPreview();
     } catch(e) {
       status.className = "error";
-      status.textContent = "Error de conexión con el ESP32.";
+      status.textContent = "Error connecting to ESP32.";
     }
     btn.disabled = false;
   }
 
   async function resetData() {
-    if(confirm("¿Seguro que quieres borrar todas las mediciones?")) {
+    if(confirm("Are you sure you want to clear all measurements?")) {
       await fetch('/api/reset', { method: 'POST' });
       loadPreview();
     }
@@ -392,25 +391,30 @@ void handleMeasure() {
   uint8_t currentId = server.arg("current").toInt();
   int anclasEncontradas = 0;
   
-  Serial.printf("\nIniciando escaneo desde el ancla %u...\n", currentId);
+  Serial.printf("\nStarting scanning from anchor %u...\n", currentId);
 
-  // LA MAGIA: Forzamos un reinicio de la radio para salir de cualquier 
-  // estado de cuelgue que haya provocado el escaneo previo.
-  initializeDW3000();
-  
   for (uint8_t target = 1; target < MAX_ANCHORS; target++) {
     if (target == currentId) continue;
+    
+    // FIX 1: Reiniciar el estado del hardware para cada ancla.
+    // Esto asegura que los timeouts de las anclas anteriores 
+    // no bloqueen la recepción de la actual.
+    initializeDW3000(); 
     
     DistanceReading reading;
     
     if (measureAnchorMedian(target, DEFAULT_SAMPLES, reading)) {
       saveDistance(currentId, target, reading.distance);
       anclasEncontradas++;
-      Serial.printf("-> Éxito: Ancla %u a %.2f metros\n", target, reading.distance);
+      Serial.printf("-> Success: Anchor %u at %.2f meters\n", target, reading.distance);
     }
+
+    // FIX 2: Ceder tiempo al sistema operativo del ESP32
+    // Evita que el stack WiFi se caiga o el Watchdog salte.
+    yield(); 
   }
   
-  Serial.println("Escaneo finalizado.");
+  Serial.println("Scanning completed.");
   
   String response = "{\"success\":true,\"count\":";
   response += anclasEncontradas;
@@ -418,13 +422,12 @@ void handleMeasure() {
   
   server.send(200, "application/json", response);
 }
-
 void handleReset() {
   clearDistances();
   server.send(200, "text/plain", "Cleared");
 }
 
 void handleDownload() {
-  server.sendHeader("Content-Disposition", "attachment; filename=\"distancias.json\"");
+  server.sendHeader("Content-Disposition", "attachment; filename=\"distances.json\"");
   server.send(200, "application/json; charset=utf-8", generateJson());
 }

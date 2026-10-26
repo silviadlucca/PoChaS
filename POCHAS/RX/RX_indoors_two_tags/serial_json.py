@@ -4,7 +4,7 @@ import threading
 import time
 import queue
 
-data_queue = queue.Queue()
+data_queue = queue.LifoQueue()
 
 def read_port(port_name):
     try:
@@ -28,12 +28,14 @@ def read_port(port_name):
     except Exception as e:
         print(f"Puerto {port_name} no disponible: {e}")
 
-# Arrancamos los lectores en hilos separados
+# we start two threads to read from two different serial ports
 threading.Thread(target=read_port, args=('/dev/ttyUSB0',), daemon=True).start()
 threading.Thread(target=read_port, args=('/dev/ttyUSB1',), daemon=True).start()
 
 def read_tag_data():
-    """Extrae el dato más antiguo de la cola si hay alguno"""
-    if not data_queue.empty():
-        return data_queue.get()
-    return None
+    """It gets the most recent tag data from the queue. If the queue is empty, it returns None."""
+    while not data_queue.empty():
+        try:
+            return data_queue.get()
+        except queue.Empty:
+            return None

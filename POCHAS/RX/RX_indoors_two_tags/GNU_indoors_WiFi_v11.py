@@ -258,7 +258,7 @@ if __name__ == '__main__':
                     txt_file.write(f"# Frequency: {freq/1e6} MHz\n")
                     txt_file.write(f"# Gain: {gain} dB\n")
                     txt_file.write("# Measurement\tRSSI (dB)\n")
-                    txt_file.write("RSSI (dB)\tDistance to anchors\tTag\tTimestamp\tTemperature\n")
+                    txt_file.write("RSSI (dB)\tDistance to anchors\tRSSIs to anchors\tTag\tTimestamp\tTemperature\n")
                     txt_file.flush()
                     
                     while recording and server_running:
