@@ -9,7 +9,7 @@ import os
 from scipy.interpolate import NearestNDInterpolator
 
 ################
-select = 2 # 0: ALL 1: 2D position & RSSI, 2: 2D position and height
+select = 0 # 0: ALL 1: 2D position & RSSI, 2: 2D position and height
 ################
 times = {"time": [], "tag": []}
 data = {
@@ -96,12 +96,6 @@ with open(json_f, 'r') as f:
 
 # find files
 
-all_files = glob.glob('*_Rxfile.txt')
-
-if not all_files:
-    raise FileNotFoundError("No file found matching the pattern '*_Rxfile.txt' in the current directory.")
-
-file = max(all_files, key=os.path.getmtime)
 file = "433_Rxfile.txt"
 #file = "2_4_v1_Rxfile.txt"
 #file = "2_4_v2_Rxfile.txt"
