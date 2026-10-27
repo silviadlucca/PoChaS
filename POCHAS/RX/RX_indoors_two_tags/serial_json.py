@@ -33,7 +33,7 @@ def read_port(port_name):
 threading.Thread(target=read_port, args=('/dev/ttyUSB0',), daemon=True).start()
 threading.Thread(target=read_port, args=('/dev/ttyUSB1',), daemon=True).start()
 
-def read_tag_data(tag_id):
+def read_tag_data():
     """It gets the most recent data for a specific tag."""
     if not latest_data:
         return None
